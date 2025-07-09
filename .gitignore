@@ -1,0 +1,45 @@
+# === GLOBAL ===
+*.log
+*.pyc
+__pycache__/
+.DS_Store
+.env
+.env.*
+
+# === BACKEND (Python / Flask) ===
+backend/venv/
+backend/instance/
+backend/.mypy_cache/
+backend/.pytest_cache/
+backend/*.sqlite3
+backend/*.db
+backend/*.egg-info/
+backend/*.pyo
+backend/*.pyd
+
+# VSCode
+.vscode/
+
+# === FRONTEND (Vue / Node) ===
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.*
+
+# Lock files
+package-lock.json
+yarn.lock
+
+# === TEST / COVERAGE ===
+coverage/
+htmlcov/
+*.cover
+*.py,cover
+.cache
+.noseids
+.junit.xml
+
+# === OS-SPECIFIC ===
+Thumbs.db
+ehthumbs.db
+Desktop.ini
