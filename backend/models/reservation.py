@@ -8,5 +8,6 @@ class Reservation(db.Model):
     parking_timestamp = db.Column(db.DateTime, nullable=False)
     leaving_timestamp = db.Column(db.DateTime, nullable=False)
     parking_cost = db.Column(db.Float, nullable=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    spot_id = db.Column(db.Integer, db.ForeignKey('parking_spot.id'), nullable=False)
+
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False) 
+    spot_id = db.Column(db.Integer, db.ForeignKey('parking_spots.id'), nullable=False)
