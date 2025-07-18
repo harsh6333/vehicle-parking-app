@@ -2,8 +2,9 @@ from flask import Flask
 from config import Config
 from extensions import db, jwt
 from routes.auth import auth_bp
+from routes.admin import admin_bp 
 from flask_cors import CORS
-from models.user import User  
+from models.user import User 
 import os
 
 def create_app():
@@ -12,9 +13,10 @@ def create_app():
 
     db.init_app(app)
     jwt.init_app(app)
-    CORS(app)
+    CORS(app, origins=["http://localhost:8080"], supports_credentials=True)
 
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
+    app.register_blueprint(admin_bp, url_prefix='/api/admin')
 
     with app.app_context():
         if not os.path.exists("instance/parking_app.db"): 

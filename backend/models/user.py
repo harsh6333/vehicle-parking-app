@@ -9,13 +9,11 @@ class User(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(128), nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
+    
     reservations = db.relationship('Reservation', backref='user', lazy=True)
 
     def generate_token(self):
-        return create_access_token(identity={"id": self.id, "is_admin": self.is_admin})
-
-    def __repr__(self):
-        return f"<User {self.username}>"
+        return create_access_token(identity=str(self.id), additional_claims={"is_admin": self.is_admin})
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)

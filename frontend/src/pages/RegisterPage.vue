@@ -1,36 +1,101 @@
 <template>
-  <div class="container mt-5">
-    <h2 class="text-center">Create an Account</h2>
-    <div class="form-group mt-4">
-      <input
-        v-model="username"
-        class="form-control"
-        placeholder="Username"
-        type="text"
-      />
-      <input
-        v-model="email"
-        class="form-control mt-2"
-        placeholder="Email"
-        type="email"
-      />
-      <input
-        v-model="password"
-        class="form-control mt-2"
-        placeholder="Password"
-        type="password"
-      />
-      <button @click="handleRegister" class="btn btn-success mt-3 w-100">
-        Register
-      </button>
-      <p v-if="error" class="text-danger mt-2">{{ error }}</p>
-      <p v-if="success" class="text-success mt-2">{{ success }}</p>
+  <div class="container-fluid min-vh-100 d-flex p-0">
+    <!-- Left: Registration Form -->
+    <div
+      class="col-lg-5 d-flex align-items-center justify-content-center bg-white"
+    >
+      <div class="p-4 p-md-5 w-100" style="max-width: 400px">
+        <div class="mb-4 text-center">
+          <h2 class="fw-bold text-success">Register</h2>
+          <p class="text-muted">Create your parking account</p>
+        </div>
+
+        <!-- Username -->
+        <div class="mb-3">
+          <label for="username" class="form-label">Username</label>
+          <div class="input-group">
+            <span class="input-group-text bg-light">
+              <i class="bi bi-person-fill"></i>
+            </span>
+            <input
+              v-model="username"
+              type="text"
+              id="username"
+              class="form-control"
+              placeholder="Enter username"
+            />
+          </div>
+        </div>
+
+        <!-- Email -->
+        <div class="mb-3">
+          <label for="email" class="form-label">Email</label>
+          <div class="input-group">
+            <span class="input-group-text bg-light">
+              <i class="bi bi-envelope-fill"></i>
+            </span>
+            <input
+              v-model="email"
+              type="email"
+              id="email"
+              class="form-control"
+              placeholder="Enter email"
+            />
+          </div>
+        </div>
+
+        <!-- Password -->
+        <div class="mb-3">
+          <label for="password" class="form-label">Password</label>
+          <div class="input-group">
+            <span class="input-group-text bg-light">
+              <i class="bi bi-lock-fill"></i>
+            </span>
+            <input
+              v-model="password"
+              type="password"
+              id="password"
+              class="form-control"
+              placeholder="Enter password"
+            />
+          </div>
+        </div>
+
+        <!-- Register Button -->
+        <button @click="handleRegister" class="btn btn-success w-100 mb-3">
+          Register
+        </button>
+
+        <!-- Alerts -->
+        <div v-if="error" class="alert alert-danger text-center py-2">
+          {{ error }}
+        </div>
+        <div v-if="success" class="alert alert-success text-center py-2">
+          {{ success }}
+        </div>
+
+        <!-- Login Link -->
+        <div class="text-center mt-3">
+          <small>
+            Already have an account?
+            <router-link to="/login" class="fw-semibold text-decoration-none">
+              Login here
+            </router-link>
+          </small>
+        </div>
+      </div>
     </div>
 
-    <div class="text-center mt-3">
-      <router-link to="/login" class="btn btn-outline-secondary btn-sm">
-        Back to Login
-      </router-link>
+    <!-- Right: Illustration -->
+    <div
+      class="col-lg-7 d-none d-lg-flex align-items-center justify-content-center bg-light"
+    >
+      <img
+        src="/havetoadd.svg"
+        alt="Register Illustration"
+        class="img-fluid p-5"
+        style="max-height: 80%"
+      />
     </div>
   </div>
 </template>
@@ -56,10 +121,16 @@ const handleRegister = async () => {
       email: email.value,
       password: password.value,
     });
-    success.value = "Registration successful! Redirecting to login...";
+    success.value = "Registration successful! Redirecting...";
     setTimeout(() => router.push("/login"), 1500);
   } catch (err) {
     error.value = err.response?.data?.msg || "Registration failed";
   }
 };
 </script>
+
+<style scoped>
+body {
+  background-color: #f7fafd;
+}
+</style>

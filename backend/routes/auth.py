@@ -1,16 +1,43 @@
 from flask import Blueprint, request, jsonify
+from flask_jwt_extended import set_access_cookies, unset_jwt_cookies
 from app import db
 from models.user import User
-from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
+from flask import make_response
 
 auth_bp = Blueprint('auth', __name__)
 
-# Register user (not admin)
+
+from flask_jwt_extended import jwt_required, get_jwt
+
+
+@auth_bp.route('/me', methods=['GET'])
+@jwt_required()
+def get_current_user():
+    claims = get_jwt()
+    user_id = claims.get('sub', {}).get('id') if isinstance(claims.get('sub'), dict) else claims.get('sub')
+
+    user = User.query.get(user_id)
+
+    if not user:
+        return jsonify({'msg': 'User not found'}), 404
+
+    return jsonify({
+        "id": user.id,
+        "username": user.username,
+        "email": user.email,
+        "is_admin": user.is_admin
+    }), 200
+
+
 @auth_bp.route('/register', methods=['POST'])
 def register():
     data = request.json
+    if not data or not all(k in data for k in ('username', 'email', 'password')):
+        return jsonify({'msg': 'Missing required fields'}), 400
+
     if User.query.filter_by(email=data['email']).first():
         return jsonify({'msg': 'User already exists'}), 409
+
     user = User(
         username=data['username'],
         email=data['email'],
@@ -21,15 +48,23 @@ def register():
     db.session.commit()
     return jsonify({'msg': 'User registered successfully'}), 201
 
-# Login (user + admin)
 @auth_bp.route('/login', methods=['POST'])
 def login():
     data = request.json
+    if not data or not data.get('email') or not data.get('password'):
+        return jsonify({'msg': 'Missing email or password'}), 400
+
     user = User.query.filter_by(email=data['email']).first()
     if not user or not user.check_password(data['password']):
         return jsonify({'msg': 'Invalid credentials'}), 401
-    token = user.generate_token()
-    return jsonify({
-        'access_token': token,
-        'is_admin': user.is_admin
-    }), 200
+
+    access_token = user.generate_token()
+    resp = make_response(jsonify({"msg": "Login successful", "is_admin": user.is_admin}))
+    set_access_cookies(resp, access_token)
+    return resp, 200
+
+@auth_bp.route('/logout', methods=['POST'])
+def logout():
+    resp = make_response(jsonify({"msg": "Logout successful"}))
+    unset_jwt_cookies(resp)
+    return resp, 200

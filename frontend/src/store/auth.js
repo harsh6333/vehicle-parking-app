@@ -1,22 +1,29 @@
 import { defineStore } from "pinia";
+import axios from "axios";
 
 export const useAuthStore = defineStore("auth", {
   state: () => ({
-    token: null,
-    username: "",
+    isAuthenticated: false,
     isAdmin: false,
+    user: null,
   }),
   actions: {
-    login({ token, username, is_admin }) {
-      this.token = token;
-      this.username = username;
-      this.isAdmin = is_admin;
+    async fetchUser() {
+      try {
+        const res = await axios.get("http://127.0.0.1:5000/api/auth/me", {
+          withCredentials: true,
+        });
+        this.user = res.data;
+        this.isAdmin = res.data.is_admin;
+        this.isAuthenticated = true;
+      } catch {
+        this.logout();
+      }
     },
     logout() {
-      this.token = null;
-      this.username = "";
+      this.isAuthenticated = false;
+      this.user = null;
       this.isAdmin = false;
     },
   },
-  persist: true,
 });
