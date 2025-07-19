@@ -3,9 +3,9 @@ import axios from "axios";
 
 export const useAuthStore = defineStore("auth", {
   state: () => ({
-    isAuthenticated: false,
-    isAdmin: false,
     user: null,
+    isAdmin: false,
+    isAuthenticated: false,
   }),
   actions: {
     async fetchUser() {
@@ -21,9 +21,9 @@ export const useAuthStore = defineStore("auth", {
       }
     },
     logout() {
-      this.isAuthenticated = false;
       this.user = null;
       this.isAdmin = false;
+      this.isAuthenticated = false;
     },
   },
 });

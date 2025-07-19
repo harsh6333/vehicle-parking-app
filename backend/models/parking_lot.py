@@ -8,7 +8,6 @@ class ParkingLot(db.Model):
     pin_code = db.Column(db.String(10))
     price = db.Column(db.Float, nullable=False)
     number_of_spots = db.Column(db.Integer, nullable=False)
-
     spots = db.relationship('ParkingSpot', backref='lot', cascade="all, delete", lazy=True)
 
     def __repr__(self):

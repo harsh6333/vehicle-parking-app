@@ -6,6 +6,8 @@ from models.parking_lot import ParkingLot
 from models.parking_spot import ParkingSpot
 from models.user import User
 from models.reservation import Reservation
+from datetime import datetime
+from utils.decorators import admin_required
 from app import db
 
 admin_bp = Blueprint('admin', __name__)
@@ -13,23 +15,6 @@ admin_bp = Blueprint('admin', __name__)
 
 
 
-def admin_required(fn):
-    @wraps(fn)
-    def wrapper(*args, **kwargs):
-        if request.method == 'OPTIONS':
-            return '', 200  
-
-        try:
-            verify_jwt_in_request()
-            claims = get_jwt()
-            if not claims.get("is_admin", False):
-                return jsonify({"msg": "Admin access required"}), 403
-        except Exception as e:
-            return jsonify({"msg": "Authorization error", "error": str(e)}), 401
-
-        return fn(*args, **kwargs)
-
-    return wrapper
 
 
 
@@ -40,8 +25,6 @@ def admin_required(fn):
 def create_lot():
     try:
         data = request.json
-        print("Incoming data:", data)
-
         lot = ParkingLot(
             prime_location_name=data["prime_location_name"],
             address=data.get("address", ""),
@@ -54,7 +37,7 @@ def create_lot():
         print("Created lot with ID:", lot.id)
 
         for i in range(lot.number_of_spots):
-            spot = ParkingSpot(status='A', lot_id=lot.id)
+            spot = ParkingSpot( lot_id=lot.id)
             db.session.add(spot)
         print(f"Added {lot.number_of_spots} spots")
 
@@ -87,14 +70,13 @@ def update_lot(lot_id):
     new_spot_count = data.get("number_of_spots", lot.number_of_spots)
     current_spot_count = len(lot.spots)
 
-    # Update number of spots if changed
     if new_spot_count > current_spot_count:
         # Add new spots
         for _ in range(new_spot_count - current_spot_count):
-            db.session.add(ParkingSpot(status='A', lot_id=lot.id))
+            db.session.add(ParkingSpot(lot_id=lot.id))
     elif new_spot_count < current_spot_count:
         # Remove excess spots — only unoccupied ones
-        removable_spots = ParkingSpot.query.filter_by(lot_id=lot.id, status='A').limit(current_spot_count - new_spot_count).all()
+        removable_spots = ParkingSpot.query.filter_by(lot_id=lot.id).limit(current_spot_count - new_spot_count).all()
         for spot in removable_spots:
             db.session.delete(spot)
 
@@ -116,35 +98,65 @@ def delete_lot(lot_id):
     return jsonify({"msg": "Lot deleted"}), 200
 
 
-@admin_bp.route('/lots', methods=['GET'])
-@admin_required
-def list_lots():
-    lots = ParkingLot.query.all()
-    result = []
-    for lot in lots:
-        spots = ParkingSpot.query.filter_by(lot_id=lot.id).all()
-        total = len(spots)
-        occupied = len([s for s in spots if s.status == 'O'])
-        result.append({
-            "id": lot.id,
-            "address": lot.prime_location_name,
-            "pin_code":lot.pin_code,
-            "price": lot.price,
-            "number_of_spots": total,
-            "occupied_spots": occupied
-        })
-    return jsonify(result), 200
 
+
+@admin_bp.route("/lots", methods=["GET"])
+@admin_required
+def get_lots():
+    lots = ParkingLot.query.all()
+    response = []
+
+    for lot in lots:
+        lot_data = {
+            "id": lot.id,
+            "prime_location_name": lot.prime_location_name,
+            "address": lot.address,
+            "pin_code": lot.pin_code,
+            "price": lot.price,
+            "total_spots": lot.number_of_spots,
+            
+        }    
+
+        response.append(lot_data)
+
+    return jsonify(response), 200
 
 
 @admin_bp.route('/lots/<int:lot_id>/spots', methods=['GET'])
 @admin_required
 def spot_details(lot_id):
+    date_str = request.args.get("date")
+
+    try:
+        selected_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+    except Exception:
+        return jsonify({"msg": "Invalid date"}), 400
+
     spots = ParkingSpot.query.filter_by(lot_id=lot_id).all()
-    return jsonify([
-        {"id": s.id, "status": s.status}
-        for s in spots
-    ]), 200
+    result = []
+
+    for spot in spots:
+        reservations = []
+        for r in spot.reservations:
+            if r.reserved_at.date() == selected_date:
+                reservations.append({
+                    "reservation_id": r.id,
+                    "user_id": r.user_id,
+                    "spot_id": r.spot_id,
+                    "reserved_at": r.reserved_at.isoformat(),
+                    "reserved_till": r.reserved_till.isoformat(),
+                    "parking_timestamp": r.parking_timestamp.isoformat() if r.parking_timestamp else None,
+                    "leaving_timestamp": r.leaving_timestamp.isoformat() if r.parking_timestamp else None,
+                })
+
+        result.append({
+            "spot_id": spot.id,
+            "reservations": reservations,
+        })
+
+    return jsonify({"spots": result}), 200
+
+
 
 
 
@@ -160,8 +172,10 @@ def list_users():
             "is_admin": u.is_admin,
             "reservations": [{
                 "spot_id": r.spot_id,
-                "from": r.parking_timestamp,
-                "to": r.leaving_timestamp
+                "reserved_at": r.reserved_at.isoformat(),
+                "reserved_till": r.reserved_till.isoformat(),
+                "parking_timestamp": r.parking_timestamp.isoformat() if r.parking_timestamp else None,
+                "leaving_timestamp": r.leaving_timestamp.isoformat() if r.parking_timestamp else None,
             } for r in u.reservations]
         })
     return jsonify(result), 200

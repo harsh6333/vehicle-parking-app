@@ -5,6 +5,7 @@ from routes.auth import auth_bp
 from routes.admin import admin_bp 
 from flask_cors import CORS
 from models.user import User 
+from routes.user import user_bp
 import os
 
 def create_app():
@@ -17,6 +18,7 @@ def create_app():
 
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(admin_bp, url_prefix='/api/admin')
+    app.register_blueprint(user_bp, url_prefix='/api/user')
 
     with app.app_context():
         if not os.path.exists("instance/parking_app.db"): 

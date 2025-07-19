@@ -11,5 +11,9 @@ export const fetchLots = () => axiosInstance.get("/lots");
 export const createLot = (data) => axiosInstance.post("/lots", data);
 export const deleteLotById = (id) => axiosInstance.delete(`/lots/${id}`);
 export const updateLot = (id, data) => axiosInstance.put(`/lots/${id}`, data);
-export const fetchSpots = (lotId) => axiosInstance.get(`/lots/${lotId}/spots`);
+export const fetchSpots = (lotId, date) =>
+  axiosInstance.get(`/lots/${lotId}/spots`, {
+    params: { date },
+  });
+
 export const fetchUsers = () => axiosInstance.get("/users");

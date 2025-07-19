@@ -1,8 +1,11 @@
-from flask import Blueprint, request, jsonify
-from flask_jwt_extended import set_access_cookies, unset_jwt_cookies
 from app import db
 from models.user import User
-from flask import make_response
+from flask import Blueprint, request, jsonify, make_response
+from flask_jwt_extended import (
+    create_access_token, set_access_cookies, unset_jwt_cookies,
+    jwt_required, get_jwt, get_jwt_identity
+)
+from datetime import timedelta
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -58,7 +61,14 @@ def login():
     if not user or not user.check_password(data['password']):
         return jsonify({'msg': 'Invalid credentials'}), 401
 
-    access_token = user.generate_token()
+    access_token = create_access_token(
+    identity=str(user.id),  # ✅ must be string
+    additional_claims={
+        "username": user.username,
+        "is_admin": user.is_admin
+    },
+    expires_delta=timedelta(days=1)
+)
     resp = make_response(jsonify({"msg": "Login successful", "is_admin": user.is_admin}))
     set_access_cookies(resp, access_token)
     return resp, 200
