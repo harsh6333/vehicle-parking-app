@@ -74,8 +74,9 @@
               <label class="form-label small mb-1">Duration (hours)</label>
               <input
                 type="number"
-                v-model.number="durations[spot.id]"
+                v-model="durations[spot.id]"
                 min="1"
+                step="1"
                 class="form-control form-control-sm"
               />
             </div>
@@ -142,17 +143,15 @@ const goBack = () => {
   router.go(-1);
 };
 
-const toLocalISOString = (date) => {
-  const pad = (n) => String(n).padStart(2, "0");
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(
-    date.getDate()
-  )}T${pad(date.getHours())}:${pad(date.getMinutes())}:00`;
-};
-
 const fetchSpotsfunc = async () => {
   try {
-    const today = new Date().toISOString().split("T")[0];
-    const response = await fetchSpots(lotId, today);
+    const now = new Date();
+    const istOffset = 5.5 * 60 * 60 * 1000;
+    const istDate = new Date(now.getTime() + istOffset);
+
+    const istDateStr = istDate.toISOString().split("T")[0];
+
+    const response = await fetchSpots(lotId, istDateStr);
     lot.value = response.data.lot;
     spots.value = response.data.spots;
   } catch (error) {
@@ -162,7 +161,7 @@ const fetchSpotsfunc = async () => {
 
 const reserveSpotfunc = async (spotId) => {
   try {
-    const duration = durations.value[spotId] || 1;
+    const duration = Number(durations.value[spotId] || 1);
     const timeStr = startTimes.value[spotId] || "00:00";
     const [hour, minute] = timeStr.split(":").map(Number);
 
@@ -175,10 +174,10 @@ const reserveSpotfunc = async (spotId) => {
       minute
     );
 
-    const start_time = toLocalISOString(localStart);
+    const start_time = localStart.toISOString();
 
     await reserveSpot(spotId, start_time, duration);
-    await fetchSpotsfunc(); // refresh
+    await fetchSpotsfunc();
   } catch (error) {
     console.error("Error reserving spot:", error);
   }
@@ -186,9 +185,12 @@ const reserveSpotfunc = async (spotId) => {
 
 const formatTime = (ts) => {
   if (!ts) return "-";
-  return new Date(ts).toLocaleTimeString([], {
+  const date = new Date(ts);
+  return date.toLocaleTimeString("en-IN", {
     hour: "2-digit",
     minute: "2-digit",
+    hour12: true,
+    timeZone: "Asia/Kolkata",
   });
 };
 

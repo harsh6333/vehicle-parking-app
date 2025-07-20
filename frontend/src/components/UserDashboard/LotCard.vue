@@ -14,10 +14,7 @@
         </span>
       </div>
 
-      <SpotGrid
-        :spots="lot.spots"
-        @reserve="(spotId) => $emit('reserve', spotId)"
-      />
+      <SpotGrid :spots="lot.spots" />
 
       <button
         class="btn btn-outline-primary w-100 mt-3"
@@ -36,7 +33,7 @@ defineProps({
   lot: Object,
 });
 
-defineEmits(["reserve", "viewDetails"]);
+defineEmits(["viewDetails"]);
 </script>
 
 <style scoped>

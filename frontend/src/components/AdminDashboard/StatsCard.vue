@@ -1,22 +1,13 @@
 <template>
-  <div class="stat-card card bg-white border-0 shadow-sm h-100">
-    <div class="card-body">
-      <div class="d-flex justify-content-between">
-        <div>
-          <h6 class="text-muted mb-2">{{ title }}</h6>
-          <template v-if="loading">
-            <div class="placeholder-glow">
-              <span class="placeholder col-4" style="height: 2rem"></span>
-            </div>
-          </template>
-          <h3 v-else class="mb-0">{{ value }}</h3>
-        </div>
-        <div
-          class="icon-circle"
-          :class="`bg-${color}-bg-opacity-10 text-${color}`"
-        >
-          <i :class="`bi ${icon}`"></i>
-        </div>
+  <div class="stat-card" :class="{ 'stat-card-loading': loading }">
+    <div class="stat-content">
+      <div class="stat-text">
+        <div class="stat-title">{{ title }}</div>
+        <div v-if="!loading" class="stat-value">{{ value }}</div>
+        <div v-else class="stat-loading"></div>
+      </div>
+      <div class="stat-icon" :class="`bg-${color}`">
+        <i :class="`bi ${icon}`"></i>
       </div>
     </div>
   </div>
@@ -49,21 +40,83 @@ defineProps({
 
 <style scoped>
 .stat-card {
-  border-radius: 10px;
-  transition: transform 0.3s;
+  background: white;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  height: 100%;
 }
 
 .stat-card:hover {
   transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
 }
 
-.icon-circle {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
+.stat-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.stat-text {
+  flex: 1;
+}
+
+.stat-title {
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #6c757d;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.stat-value {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #2c3e50;
+  line-height: 1.2;
+}
+
+.stat-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.25rem;
+  color: white;
+  font-size: 1rem;
+}
+
+.stat-loading {
+  width: 80%;
+  height: 32px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+  border-radius: 6px;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Color variants */
+.bg-primary {
+  background-color: var(--bs-primary) !important;
+}
+.bg-success {
+  background-color: var(--bs-success) !important;
+}
+.bg-info {
+  background-color: var(--bs-info) !important;
 }
 </style>

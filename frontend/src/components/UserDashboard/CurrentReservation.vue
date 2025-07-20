@@ -22,13 +22,13 @@
             <div>
               <small class="text-muted">From</small>
               <p class="mb-0 fw-bold">
-                {{ formatTime(reservation.reserved_at) }}
+                {{ formatTime("at", reservation.reserved_at) }}
               </p>
             </div>
             <div>
               <small class="text-muted">To</small>
               <p class="mb-0 fw-bold">
-                {{ formatTime(reservation.reserved_till) }}
+                {{ formatTime("till", reservation.reserved_till) }}
               </p>
             </div>
           </div>
@@ -63,10 +63,20 @@ defineProps({
 });
 
 defineEmits(["checkIn", "cancel"]);
-
-const formatTime = (timestamp) => {
+const formatTime = (value, timestamp) => {
   if (!timestamp) return "-";
-  const date = new Date(timestamp);
+
+  // Remove trailing whitespace or carriage return
+  timestamp = timestamp.trim();
+
+  const [datePart, timePart] = timestamp.split("T");
+  const [year, month, day] = datePart.split("-").map(Number);
+  const [hour, minute] = timePart.split(":").map(Number);
+
+  const date = new Date(year, month - 1, day, hour, minute);
+
+  if (isNaN(date)) return "Invalid Date";
+
   return date.toLocaleString([], {
     year: "numeric",
     month: "short",

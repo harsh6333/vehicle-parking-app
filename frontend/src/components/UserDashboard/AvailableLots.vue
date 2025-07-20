@@ -11,7 +11,6 @@
         <div class="col-md-6 col-lg-4" v-for="lot in lots" :key="lot.id">
           <LotCard
             :lot="lot"
-            @reserve="(spotId) => $emit('reserve', spotId)"
             @view-details="(lotId) => $emit('viewDetails', lotId)"
           />
         </div>
@@ -27,5 +26,5 @@ defineProps({
   lots: Array,
 });
 
-defineEmits(["reserve", "viewDetails"]);
+defineEmits(["viewDetails"]);
 </script>

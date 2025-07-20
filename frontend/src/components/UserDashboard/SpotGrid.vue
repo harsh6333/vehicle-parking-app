@@ -8,7 +8,6 @@
         available: !spot.reservations.length,
         reserved: spot.reservations.length,
       }"
-      @click="spot.reservations.length ? null : $emit('reserve', spot.spot_id)"
       :title="spot.reservations.length ? 'Reserved' : 'Click to reserve'"
     >
       #{{ spot.spot_id }}
@@ -23,8 +22,6 @@
 defineProps({
   spots: Array,
 });
-
-defineEmits(["reserve"]);
 </script>
 
 <style scoped>

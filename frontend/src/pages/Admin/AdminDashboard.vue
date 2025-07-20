@@ -5,63 +5,71 @@
       :navigation="[
         {
           title: 'Dashboard',
-          link: '/user/dashboard',
+          link: '/admin/dashboard',
           icon: 'bi bi-speedometer2',
         },
         {
-          title: 'History',
-          link: '/user/parking_history',
+          title: 'All Users',
+          link: '/admin/all_users',
+          icon: 'bi bi-clock-history',
+        },
+        {
+          title: 'All Lots',
+          link: '/admin/all_lots',
           icon: 'bi bi-clock-history',
         },
       ]"
     />
+
     <!-- Main Content -->
     <main class="main-content">
-      <div class="container-fluid">
+      <div class="container-fluid px-4 py-4">
         <!-- Stats Cards -->
         <StatsOverview
           :lots="lots"
           :totalSpots="totalSpots"
           :users="users"
+          :totalearnings="totalearnings"
           :loading="loading"
         />
 
         <!-- Main Content -->
-        <div class="row">
+        <div class="row g-4">
           <!-- Left Column -->
           <div class="col-lg-8">
             <!-- Lot Form -->
-            <div class="card mb-4 border-0 shadow-sm">
-              <div class="card-header bg-white border-0 py-3">
-                <h5 class="mb-0">
-                  <i class="bi bi-plus-circle me-2 text-primary"></i>
+            <div class="card mb-4 border-0">
+              <div class="card-header bg-transparent border-0 pb-0 pt-3 px-4">
+                <h5
+                  class="card-title fw-semibold mb-0 d-flex align-items-center"
+                >
+                  <i class="bi bi-plus-circle-fill me-2 text-primary"></i>
                   {{ form.id ? "Edit Parking Lot" : "Create New Parking Lot" }}
                 </h5>
               </div>
-              <div class="card-body">
+              <div class="card-body px-4 pt-2 pb-4">
                 <LotForm :model-value="form" @submit="handleSubmit" />
               </div>
             </div>
 
             <!-- Parking Lots List -->
-            <div class="card border-0 shadow-sm">
-              <div class="card-header bg-white border-0 py-3">
+            <div class="card border-0">
+              <div class="card-header bg-transparent border-0 pb-0 pt-3 px-4">
                 <div class="d-flex justify-content-between align-items-center">
-                  <h5 class="mb-0">
+                  <h5
+                    class="card-title fw-semibold mb-0 d-flex align-items-center"
+                  >
                     <i class="bi bi-list-ul me-2 text-primary"></i>
                     All Parking Lots
                   </h5>
-                  <input
-                    type="date"
-                    v-model="selectedDate"
-                    class="form-control form-control-sm w-auto"
-                    @change="loadLots"
-                  />
+                  <router-link to="/admin/all_lots" class="btn btn-action">
+                    <i class="bi bi-eye"></i> View Spots
+                  </router-link>
                 </div>
               </div>
 
-              <div class="card-body">
-                <div v-if="loading" class="text-center py-4">
+              <div class="card-body px-4">
+                <div v-if="loading" class="text-center py-5">
                   <div class="spinner-border text-primary" role="status">
                     <span class="visually-hidden">Loading...</span>
                   </div>
@@ -69,12 +77,7 @@
                 <template v-else>
                   <div v-if="lots.length" class="row g-3">
                     <div v-for="lot in lots" :key="lot.id" class="col-md-6">
-                      <LotCard
-                        :lot="lot"
-                        @edit="editLot"
-                        @delete="deleteLot"
-                        @viewSpots="loadSpots"
-                      />
+                      <LotCard :lot="lot" />
                     </div>
                   </div>
                   <EmptyState
@@ -92,26 +95,26 @@
 
           <!-- Right Column -->
           <div class="col-lg-4">
-            <!-- Spots Panel -->
-            <div class="card mb-4 border-0 shadow-sm">
-              <div class="card-header bg-white border-0 py-3">
-                <h5 class="mb-0">
-                  <i class="bi bi-car-front me-2 text-primary"></i>
-                  Parking Spots
+            <!-- Recent Reservations -->
+            <div class="card mb-4 border-0">
+              <div class="card-header bg-transparent border-0 p-3">
+                <h5
+                  class="card-title fw-semibold mb-0 d-flex align-items-center"
+                >
+                  <i class="bi bi-car-front-fill me-2 text-primary"></i>
+                  Recent Reservations
                 </h5>
               </div>
-              <div>
-                <div v-if="spotsLoading" class="text-center py-4">
+              <div class="card-body p-3">
+                <div v-if="spotsLoading" class="text-center py-3">
                   <div class="spinner-border text-primary" role="status">
                     <span class="visually-hidden">Loading...</span>
                   </div>
                 </div>
                 <template v-else>
-                  <SpotList
-                    v-if="spots.length"
-                    :spots="spots"
-                    :date="selectedDate"
-                    @dateChange="handleSpotDateChange"
+                  <LatestReservations
+                    v-if="recenthistory"
+                    :reservations="recenthistory"
                   />
                   <EmptyState
                     v-else
@@ -124,15 +127,22 @@
               </div>
             </div>
 
-            <!-- Users Panel -->
-            <div class="card border-0 shadow-sm">
-              <div class="card-header bg-white border-0 py-3">
-                <h5 class="mb-0">
-                  <i class="bi bi-people me-2 text-primary"></i>
+            <!-- Recent Users -->
+            <div class="card border-0">
+              <div
+                class="d-flex justify-content-between align-items-center bg-transparent border-0 pb-0 pt-3 px-4"
+              >
+                <h5
+                  class="card-title fw-semibold mb-0 d-flex align-items-center"
+                >
+                  <i class="bi bi-people-fill me-2 text-primary"></i>
                   Recent Users
                 </h5>
+                <router-link to="/admin/all_users" class="btn btn-action">
+                  View All Users
+                </router-link>
               </div>
-              <div class="card-body">
+              <div class="card-body px-4 pt-2 pb-4">
                 <div v-if="usersLoading" class="text-center py-4">
                   <div class="spinner-border text-primary" role="status">
                     <span class="visually-hidden">Loading...</span>
@@ -165,22 +175,19 @@ import { ref, computed, onMounted } from "vue";
 import { useAuthStore } from "@/store/auth";
 import {
   createLot,
-  fetchLots,
-  deleteLotById,
-  fetchSpots,
-  fetchUsers,
   updateLot,
+  fetchDashboardData,
 } from "@/services/adminService";
 
 // Components
 import StatsOverview from "@/components/AdminDashboard/StatsOverview.vue";
 import LotForm from "@/components/AdminDashboard/LotForm.vue";
 import LotCard from "@/components/AdminDashboard/LotCard.vue";
-import SpotList from "@/components/AdminDashboard/SpotList.vue";
 import UserTable from "@/components/AdminDashboard/UserTable.vue";
 import EmptyState from "@/components/Common/EmptyState.vue";
 import ErrorToast from "@/components/Common/ErrorToast.vue";
 import NavigationBar from "@/components/Common/NavigationBar.vue";
+import LatestReservations from "@/components/AdminDashboard/LatestReservations.vue";
 
 // State
 const auth = useAuthStore();
@@ -189,11 +196,20 @@ const loading = ref(false);
 const spotsLoading = ref(false);
 const usersLoading = ref(false);
 
-const lots = ref([]);
-const spots = ref([]);
-const users = ref([]);
-const selectedLotId = ref(null);
-const selectedDate = ref(new Date().toISOString().split("T")[0]);
+const dashboardData = ref(null);
+const totalSpots = computed(() =>
+  dashboardData.value ? dashboardData.value.stats.total_spots : 0
+);
+
+const lots = computed(() => dashboardData.value?.latest_lots || []);
+const totalearnings = computed(() =>
+  dashboardData.value ? dashboardData.value.stats.total_earnings : 0
+);
+
+const users = computed(() => dashboardData.value?.latest_users || []);
+const recenthistory = computed(
+  () => dashboardData.value?.latest_reservations || []
+);
 
 const form = ref({
   id: null,
@@ -204,65 +220,21 @@ const form = ref({
   number_of_spots: 0,
 });
 
-// Computed
-const totalSpots = computed(() => {
-  return lots.value.reduce((sum, lot) => sum + lot.total_spots, 0);
-});
-
 const recentUsers = computed(() => {
   return users.value.slice(0, 5);
 });
 
 // Methods
-const loadData = async () => {
+const loadDashboard = async () => {
   try {
     loading.value = true;
-    await Promise.all([loadUsers(), loadLots()]);
+    const res = await fetchDashboardData();
+    dashboardData.value = res.data;
   } catch (err) {
     error.value = "Failed to load dashboard data";
     console.error(err);
   } finally {
     loading.value = false;
-  }
-};
-
-const loadUsers = async () => {
-  try {
-    usersLoading.value = true;
-    const res = await fetchUsers();
-    users.value = res.data;
-  } catch (err) {
-    error.value = "Failed to load users";
-    throw err;
-  } finally {
-    usersLoading.value = false;
-  }
-};
-
-const loadLots = async () => {
-  try {
-    loading.value = true;
-    const res = await fetchLots();
-    lots.value = res.data;
-  } catch (err) {
-    error.value = "Failed to load parking lots";
-    throw err;
-  } finally {
-    loading.value = false;
-  }
-};
-
-const loadSpots = async (lotId) => {
-  try {
-    spotsLoading.value = true;
-    selectedLotId.value = lotId;
-    const res = await fetchSpots(lotId, selectedDate.value);
-    spots.value = res.data.spots;
-  } catch (err) {
-    error.value = "Failed to load parking spots";
-    console.error(err);
-  } finally {
-    spotsLoading.value = false;
   }
 };
 
@@ -274,37 +246,12 @@ const handleSubmit = async (data) => {
     } else {
       await createLot(data);
     }
-    await loadLots();
-    resetForm();
+    await loadDashboard();
+    // resetForm();
   } catch (err) {
     error.value = err.response?.data?.message || "Failed to save parking lot";
   } finally {
     loading.value = false;
-  }
-};
-
-const editLot = (lot) => {
-  form.value = { ...lot };
-};
-
-const deleteLot = async (id) => {
-  if (confirm("Are you sure you want to delete this parking lot?")) {
-    try {
-      loading.value = true;
-      await deleteLotById(id);
-      await loadLots();
-    } catch (err) {
-      error.value = "Failed to delete parking lot";
-    } finally {
-      loading.value = false;
-    }
-  }
-};
-
-const handleSpotDateChange = async (newDate) => {
-  selectedDate.value = newDate;
-  if (selectedLotId.value) {
-    await loadSpots(selectedLotId.value);
   }
 };
 
@@ -322,22 +269,50 @@ const resetForm = () => {
 // Lifecycle
 onMounted(async () => {
   await auth.fetchUser();
-  await loadData();
+  await loadDashboard();
 });
 </script>
-
 <style scoped>
 .admin-dashboard {
   display: flex;
   flex-direction: column;
-  gap: 24px;
   min-height: 100vh;
+  background-color: #f8f9fa;
 }
 
 .main-content {
   flex: 1;
-  overflow-y: auto;
-  min-height: 100vh;
-  transition: padding 0.3s ease;
+  padding-top: 1rem;
+}
+
+.card {
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.03);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  background-color: white;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+}
+
+.card-header {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.card-title {
+  font-size: 1.05rem;
+  color: #2c3e50;
+}
+
+.input-group-text {
+  border-right: none;
+}
+
+.form-control-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.825rem;
 }
 </style>

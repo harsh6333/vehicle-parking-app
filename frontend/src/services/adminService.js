@@ -6,7 +6,7 @@ const axiosInstance = axios.create({
   baseURL: API,
   withCredentials: true,
 });
-
+export const fetchDashboardData = () => axiosInstance.get("/dashboard");
 export const fetchLots = () => axiosInstance.get("/lots");
 export const createLot = (data) => axiosInstance.post("/lots", data);
 export const deleteLotById = (id) => axiosInstance.delete(`/lots/${id}`);
@@ -17,3 +17,8 @@ export const fetchSpots = (lotId, date) =>
   });
 
 export const fetchUsers = () => axiosInstance.get("/users");
+export const fetchSpotsForNow = (lotId) =>
+  axiosInstance.get(`/lots/${lotId}/spots/current`);
+
+export const fetchSpotHistory = (spotId) =>
+  axiosInstance.get(`/spots/${spotId}/history`);

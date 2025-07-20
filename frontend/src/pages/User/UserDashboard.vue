@@ -35,11 +35,7 @@
             @cancel="releaseSpotfunc"
           />
 
-          <AvailableLots
-            :lots="lots"
-            @reserve="reserveSpotfunc"
-            @viewDetails="viewLotDetails"
-          />
+          <AvailableLots :lots="lots" @viewDetails="viewLotDetails" />
 
           <RecentHistory
             :history="history.slice(0, 5)"
@@ -88,19 +84,6 @@ const availableLotsCount = computed(() => {
   ).length;
 });
 
-// Methods
-// const formatTime = (timestamp) => {
-//   if (!timestamp) return "-";
-//   const date = new Date(timestamp);
-//   return date.toLocaleString([], {
-//     year: "numeric",
-//     month: "short",
-//     day: "numeric",
-//     hour: "2-digit",
-//     minute: "2-digit",
-//   });
-// };
-
 const loadLots = async () => {
   const res = await getLots(selectedDate.value);
   lots.value = res.data;
@@ -113,21 +96,18 @@ const loadHistory = async () => {
     history.value.find((entry) => !entry.leaving_timestamp) || null;
 };
 
-const reserveSpotfunc = async (spotId, time = "00:00", hours = 1) => {
-  const [h, m] = time.split(":").map(Number);
-  const start = new Date();
-  start.setHours(h, m, 0, 0);
+const reserveSpotfunc = async (spotId, hours = 1) => {
+  // Get current time in UTC ISO format
+  const nowUTC = new Date().toISOString();
 
-  const localTime = `${start.getFullYear()}-${(start.getMonth() + 1)
-    .toString()
-    .padStart(2, "0")}-${start.getDate().toString().padStart(2, "0")} ${h
-    .toString()
-    .padStart(2, "0")}:${m.toString().padStart(2, "0")}`;
-
-  const res = await reserveSpot(spotId, localTime, hours);
-  currentReservation.value = res.data;
-  await loadLots();
-  await loadHistory();
+  try {
+    const res = await reserveSpot(spotId, nowUTC, hours); // Pass UTC ISO string
+    currentReservation.value = res.data;
+    await loadLots();
+    await loadHistory();
+  } catch (err) {
+    console.error("Failed to reserve spot:", err);
+  }
 };
 
 const autoReserve = async () => {

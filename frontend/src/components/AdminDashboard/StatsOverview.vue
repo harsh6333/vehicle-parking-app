@@ -1,6 +1,6 @@
 <template>
   <div class="row mb-4">
-    <div class="col-md-4">
+    <div class="col-md-3">
       <StatCard
         title="Total Lots"
         :value="lots.length"
@@ -9,7 +9,7 @@
         :loading="loading"
       />
     </div>
-    <div class="col-md-4">
+    <div class="col-md-3">
       <StatCard
         title="Total Spots"
         :value="totalSpots"
@@ -18,7 +18,16 @@
         :loading="loading"
       />
     </div>
-    <div class="col-md-4">
+    <div class="col-md-3">
+      <StatCard
+        title="Total Earnings"
+        :value="totalearnings"
+        icon="bi-cash"
+        color="info"
+        :loading="loading"
+      />
+    </div>
+    <div class="col-md-3">
       <StatCard
         title="Registered Users"
         :value="users.length"
@@ -39,6 +48,10 @@ defineProps({
     required: true,
   },
   totalSpots: {
+    type: Number,
+    required: true,
+  },
+  totalearnings: {
     type: Number,
     required: true,
   },

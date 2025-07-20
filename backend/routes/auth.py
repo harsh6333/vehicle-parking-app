@@ -35,21 +35,26 @@ def get_current_user():
 @auth_bp.route('/register', methods=['POST'])
 def register():
     data = request.json
-    if not data or not all(k in data for k in ('username', 'email', 'password')):
-        return jsonify({'msg': 'Missing required fields'}), 400
+
+    required_fields = ('username', 'email', 'password')
+    missing_fields = [field for field in required_fields if not data.get(field) or not str(data[field]).strip()]
+    if missing_fields:
+        return jsonify({'msg': f'Missing or empty fields: {", ".join(missing_fields)}'}), 400
 
     if User.query.filter_by(email=data['email']).first():
         return jsonify({'msg': 'User already exists'}), 409
 
     user = User(
-        username=data['username'],
-        email=data['email'],
+        username=data['username'].strip(),
+        email=data['email'].strip(),
         is_admin=False
     )
-    user.set_password(data['password'])
+    user.set_password(data['password'].strip())
     db.session.add(user)
     db.session.commit()
+
     return jsonify({'msg': 'User registered successfully'}), 201
+
 
 @auth_bp.route('/login', methods=['POST'])
 def login():

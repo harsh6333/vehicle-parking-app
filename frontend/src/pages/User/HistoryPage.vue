@@ -1,6 +1,19 @@
 <template>
   <div class="dashboard-container">
-    <NavigationBar />
+    <NavigationBar
+      :navigation="[
+        {
+          title: 'Dashboard',
+          link: '/user/dashboard',
+          icon: 'bi bi-speedometer2',
+        },
+        {
+          title: 'History',
+          link: '/user/parking_history',
+          icon: 'bi bi-clock-history',
+        },
+      ]"
+    />
     <div class="container-fluid">
       <div class="row">
         <!-- Main Content -->
@@ -332,7 +345,9 @@ const formatTime = (timestamp) => {
 
 const calculateDuration = (start, end) => {
   if (!start || !end) return 0;
+
   const diff = new Date(end) - new Date(start);
+  // console.log(start, end, (diff / (1000 * 60 * 60)).toFixed(1));
   return (diff / (1000 * 60 * 60)).toFixed(1);
 };
 
@@ -341,6 +356,8 @@ const calculateAmount = (entry) => {
     entry.reserved_at,
     entry.leaving_timestamp || entry.reserved_till
   );
+  console.log(duration, entry);
+
   return (duration * entry.hourlyrate).toFixed(2);
 };
 
