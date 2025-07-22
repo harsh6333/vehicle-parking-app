@@ -1,6 +1,4 @@
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required, get_jwt, verify_jwt_in_request
-from functools import wraps
 from models.parking_lot import ParkingLot
 from models.parking_spot import ParkingSpot
 from models.user import User
@@ -10,7 +8,8 @@ from utils.decorators import admin_required
 from app import db
 from sqlalchemy import func
 from sqlalchemy.orm import joinedload
-from pytz import timezone as timezeone2
+from extensions import cache
+
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -34,7 +33,9 @@ def create_lot():
             db.session.add(spot)
 
         db.session.commit()
+        cache.delete("admin_lots")
         return jsonify({"msg": "Lot and spots created"}), 201
+
 
     except Exception as e:
         db.session.rollback()
@@ -68,7 +69,10 @@ def update_lot(lot_id):
 
     lot.number_of_spots = new_spot_count
     db.session.commit()
+    cache.delete("admin_lots")
+    cache.delete(f"lot_spots_status_{lot_id}")
     return jsonify({"msg": "Lot updated"}), 200
+
 
 
 @admin_bp.route('/lots/<int:lot_id>', methods=['DELETE'])
@@ -76,12 +80,17 @@ def update_lot(lot_id):
 def delete_lot(lot_id):
     lot = ParkingLot.query.get_or_404(lot_id)
     db.session.delete(lot)
+    db.session.delete(lot)
     db.session.commit()
+    cache.delete("admin_lots")
+    cache.delete(f"lot_spots_status_{lot_id}")
     return jsonify({"msg": "Lot deleted"}), 200
+
 
 
 @admin_bp.route("/lots", methods=["GET"])
 @admin_required
+@cache.cached(timeout=60, key_prefix="admin_lots")
 def get_lots():
     lots = ParkingLot.query.all()
     response = []
@@ -100,8 +109,10 @@ def get_lots():
     return jsonify(response), 200
 
 
+
 @admin_bp.route('/lots/<int:lot_id>/spots/current', methods=['GET'])
 @admin_required
+@cache.cached(timeout=60, key_prefix=lambda: f"lot_spots_status_{request.view_args['lot_id']}")
 def current_spot_status(lot_id):
     now = datetime.now(timezone.utc)
     spots = ParkingSpot.query.filter_by(lot_id=lot_id).all()
@@ -109,10 +120,7 @@ def current_spot_status(lot_id):
 
     for spot in spots:
         current_reservation = next(
-            (
-                r for r in spot.reservations
-                if r.reserved_at <= now <= r.reserved_till
-            ),
+            (r for r in spot.reservations if r.reserved_at <= now <= r.reserved_till),
             None
         )
         result.append({
@@ -133,6 +141,7 @@ def current_spot_status(lot_id):
 
 @admin_bp.route('/users', methods=['GET'])
 @admin_required
+@cache.cached(timeout=60, key_prefix="admin_users_list")
 def list_users():
     users = User.query.options(joinedload(User.reservations).joinedload(Reservation.spot).joinedload(ParkingSpot.lot)).all()
     result = []
@@ -164,8 +173,8 @@ def list_users():
     return jsonify(result), 200
 
 
-
 @admin_bp.route('/dashboard', methods=['GET'])
+@cache.cached(timeout=60, key_prefix="admin_dashboard_summary")
 @admin_required
 def admin_dashboard_summary():
     try:
@@ -224,7 +233,9 @@ def admin_dashboard_summary():
         return jsonify({"msg": "Error fetching dashboard data", "error": str(e)}), 500
 
 
+
 @admin_bp.route('/spots/<int:spot_id>/history', methods=['GET'])
+@cache.cached(timeout=60, key_prefix=lambda: f"spot_history_{request.view_args['spot_id']}")
 @admin_required
 def get_spot_history(spot_id):
     spot = ParkingSpot.query.get_or_404(spot_id)
@@ -252,3 +263,46 @@ def get_spot_history(spot_id):
         })
 
     return jsonify(result), 200
+
+
+
+
+@admin_bp.route("/stats", methods=["GET"])
+@cache.cached(timeout=120, key_prefix="admin_weekly_stats")
+@admin_required
+def get_admin_stats():
+    from datetime import datetime, timedelta
+    from sqlalchemy.sql import func
+
+    today = datetime.utcnow().date()
+    labels = []
+    parking_counts = []
+    revenue_sums = []
+
+    for i in range(7):
+        day = today - timedelta(days=6 - i)
+        labels.append(day.strftime('%b %d'))
+        count = db.session.query(func.count()).filter(
+            Reservation.reserved_at.between(day, day + timedelta(days=1))
+        ).scalar()
+        revenue = db.session.query(func.sum(Reservation.parking_cost)).filter(
+            Reservation.reserved_at.between(day, day + timedelta(days=1))
+        ).scalar()
+        parking_counts.append(count or 0)
+        revenue_sums.append(float(revenue or 0.0))
+
+    return jsonify({
+        "parking": {"labels": labels, "values": parking_counts},
+        "revenue": {"labels": labels, "values": revenue_sums},
+    })
+
+
+from flask import current_app
+
+@admin_bp.route('/cache-test')
+@cache.cached(timeout=60, key_prefix="cache_test_key")
+def cache_test():
+    import time
+    current_app.logger.info("Cache miss – computing new response")
+    return jsonify({"time": time.time()})
+

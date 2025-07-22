@@ -7,16 +7,21 @@ import History from "@/pages/User/HistoryPage.vue";
 import LotDetails from "@/pages/User/LotDetails.vue";
 import AllParkingLots from "@/pages/Admin/AllParkingLots.vue";
 import PlatformUsers from "@/pages/Admin/PlatformUsers.vue";
+import StatisticsChart from "@/pages/User/StatisticsChart.vue";
+import StatisticsValues from "@/pages/Admin/StatisticsValues.vue";
 
 const routes = [
   { path: "/", redirect: "/login" },
   { path: "/login", component: MainLogin },
   { path: "/register", component: RegisterPage },
   { path: "/admin/dashboard", component: AdminDashboard },
-  { path: "/user/dashboard", component: UserDashboard },
-  { path: "/user/parking_history", component: History },
   { path: "/admin/all_lots", component: AllParkingLots },
   { path: "/admin/all_users", component: PlatformUsers },
+  { path: "/admin/statistics", component: StatisticsValues },
+  { path: "/user/dashboard", component: UserDashboard },
+  { path: "/user/parking_history", component: History },
+  { path: "/user/statistics", component: StatisticsChart },
+
   {
     path: "/lot/:id",
     component: LotDetails,

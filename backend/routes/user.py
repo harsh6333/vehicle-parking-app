@@ -9,6 +9,7 @@ from utils.decorators import user_required
 from sqlalchemy.orm import joinedload
 from utils.datetimeformate import parse_iso_datetime
 from zoneinfo import ZoneInfo 
+from extensions import cache
 
 
 user_bp = Blueprint("user", __name__)
@@ -16,6 +17,7 @@ user_bp = Blueprint("user", __name__)
 
 @user_bp.route("/lots", methods=["GET"])
 @user_required
+@cache.cached(timeout=60, key_prefix=lambda: f"user_lots_{request.args.get('date', 'all')}")
 def get_lots():
     date_str = request.args.get("date")
     ist = ZoneInfo("Asia/Kolkata")
@@ -67,6 +69,7 @@ IST = timezone(timedelta(hours=5, minutes=30))
 
 @user_bp.route('/lots/<int:lot_id>/spots', methods=['GET'])
 @user_required
+@cache.cached(timeout=60, key_prefix=lambda: f"user_lot_{request.view_args['lot_id']}_spots_{request.args.get('date', 'today')}")
 def spot_details(lot_id):
     # Use today's date in IST by default
     now_ist = datetime.now(IST)
@@ -180,6 +183,9 @@ def reserve_spot():
 
     db.session.add(new_res)
     db.session.commit()
+    cache.delete(f"user_history_{user_id}")
+    cache.delete(f"user_stats_{user_id}")
+    cache.delete(f"user_lot_{spot.lot_id}_spots_{start_time.date().isoformat()}")
 
     return jsonify({
         "reservation_id": new_res.id,
@@ -232,6 +238,9 @@ def occupy_spot(spot_id):
 
     reservation.parking_timestamp = now
     db.session.commit()
+    cache.delete(f"user_history_{user_id}")
+    cache.delete(f"user_stats_{user_id}")
+    cache.delete(f"user_lot_{spot_id}_spots_{reservation.reserved_at.date().isoformat()}")
 
     return jsonify({
         "msg": "Spot marked as occupied",
@@ -242,6 +251,7 @@ def occupy_spot(spot_id):
 @user_bp.route("/release/<int:spot_id>", methods=["PUT"])
 @user_required
 def release_spot(spot_id):
+    user_id = get_jwt_identity()
     data = request.json
     reserved_at = parse_iso_datetime(data.get("reserved_at"))
 
@@ -252,6 +262,9 @@ def release_spot(spot_id):
     now = datetime.now(timezone.utc)
     reservation.leaving_timestamp = now
     db.session.commit()
+    cache.delete(f"user_history_{user_id}")
+    cache.delete(f"user_stats_{user_id}")
+    cache.delete(f"user_lot_{spot_id}_spots_{reservation.reserved_at.date().isoformat()}")
 
     return jsonify({"message": "Spot released", "time": now.isoformat() + "Z"}), 200
 
@@ -343,6 +356,7 @@ def release_spot(spot_id):
 # Parking history for logged-in user
 @user_bp.route("/history", methods=["GET"])
 @user_required
+@cache.cached(timeout=60, key_prefix=lambda: f"user_history_{get_jwt_identity()}")
 def get_history():
     user_id = get_jwt_identity()
     reservations = Reservation.query.filter_by(user_id=user_id).order_by(Reservation.reserved_at.desc()).all()
@@ -354,7 +368,36 @@ def get_history():
             "reserved_till": r.reserved_till.isoformat() + "Z" if r.reserved_till else None,
             "parking_timestamp": r.parking_timestamp.isoformat() + "Z" if r.parking_timestamp else None,
             "leaving_timestamp": r.leaving_timestamp.isoformat() + "Z" if r.leaving_timestamp else None,
-            "hourlyrate":r.parking_cost
+            "hourlyrate":r.parking_cost,
+           "address": f"{r.spot.lot.prime_location_name},{r.spot.lot.address}," if r.spot and r.spot.lot else None,
         }
         for r in reservations
     ])
+
+
+
+@user_bp.route("/stats", methods=["GET"])
+@user_required
+@cache.cached(timeout=120, key_prefix=lambda: f"user_stats_{get_jwt_identity()}")
+def get_user_stats():
+    user_id = get_jwt_identity()
+
+    reservations = Reservation.query.filter_by(user_id=user_id).all()
+
+    from collections import defaultdict
+    from datetime import datetime
+
+    stats = defaultdict(lambda: {"hours": 0, "revenue": 0})
+
+    for res in reservations:
+        if res.reserved_at and res.reserved_till:
+            date = res.reserved_at.date().isoformat()
+            duration = (res.reserved_till - res.reserved_at).total_seconds() / 3600
+            stats[date]["hours"] += duration
+            stats[date]["revenue"] += duration * res.spot.lot.price
+
+    return jsonify({
+        "dates": list(stats.keys()),
+        "hours": [round(v["hours"], 2) for v in stats.values()],
+        "revenue": [round(v["revenue"], 2) for v in stats.values()]
+    })

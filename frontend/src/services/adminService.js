@@ -22,3 +22,4 @@ export const fetchSpotsForNow = (lotId) =>
 
 export const fetchSpotHistory = (spotId) =>
   axiosInstance.get(`/spots/${spotId}/history`);
+export const fetchAdminStats = () => axiosInstance.get(`${API}/stats`);

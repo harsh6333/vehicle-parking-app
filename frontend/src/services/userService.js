@@ -35,3 +35,4 @@ export const releaseSpot = (resId, reserved_at) =>
   });
 
 export const getHistory = () => axiosInstance.get(`${API}/history`);
+export const fetchUserStats = () => axiosInstance.get(`${API}/stats`);
