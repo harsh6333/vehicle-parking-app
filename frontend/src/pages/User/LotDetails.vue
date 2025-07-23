@@ -123,12 +123,15 @@
       </div>
     </div>
   </div>
+  <!-- Error Toast -->
+  <ErrorToast v-if="error" :message="error" @dismiss="error = null" />
 </template>
 
 <script setup>
 import { ref, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { fetchSpots, reserveSpot } from "@/services/userService";
+import ErrorToast from "@/components/Common/ErrorToast.vue";
 
 const router = useRouter();
 const route = useRoute();
@@ -142,24 +145,27 @@ const startTimes = ref({});
 const goBack = () => {
   router.go(-1);
 };
+const error = ref(null);
 
 const fetchSpotsfunc = async () => {
+  error.value = null;
   try {
     const now = new Date();
     const istOffset = 5.5 * 60 * 60 * 1000;
     const istDate = new Date(now.getTime() + istOffset);
-
     const istDateStr = istDate.toISOString().split("T")[0];
 
     const response = await fetchSpots(lotId, istDateStr);
     lot.value = response.data.lot;
     spots.value = response.data.spots;
-  } catch (error) {
-    console.error("Error fetching spots:", error);
+  } catch (err) {
+    console.error("Error fetching spots:", err);
+    error.value = "Failed to load spots. Please try again later.";
   }
 };
 
 const reserveSpotfunc = async (spotId) => {
+  error.value = null;
   try {
     const duration = Number(durations.value[spotId] || 1);
     const timeStr = startTimes.value[spotId] || "00:00";
@@ -178,8 +184,14 @@ const reserveSpotfunc = async (spotId) => {
 
     await reserveSpot(spotId, start_time, duration);
     await fetchSpotsfunc();
-  } catch (error) {
-    console.error("Error reserving spot:", error);
+  } catch (err) {
+    console.error("Error reserving spot:", err);
+
+    const message =
+      err.response?.data?.msg ||
+      err.msg ||
+      "Failed to reserve the spot. Please try again.";
+    error.value = message;
   }
 };
 

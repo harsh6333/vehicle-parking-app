@@ -1,7 +1,6 @@
 <template>
-  <div class="card p-3 shadow-sm">
-    <h5 class="mb-3">Your Parking Summary</h5>
-    <Bar :data="chartData" :options="chartOptions" />
+  <div class="chart-container">
+    <Bar :data="chartData" :options="chartOptions" class="user-stats-chart" />
   </div>
 </template>
 
@@ -15,6 +14,7 @@ import {
   BarElement,
   CategoryScale,
   LinearScale,
+  Colors,
 } from "chart.js";
 
 ChartJS.register(
@@ -23,7 +23,8 @@ ChartJS.register(
   Legend,
   BarElement,
   CategoryScale,
-  LinearScale
+  LinearScale,
+  Colors
 );
 
 const props = defineProps({
@@ -37,23 +38,89 @@ const chartData = {
   labels: props.stats.dates,
   datasets: [
     {
-      label: "Total Parking Hours",
-      backgroundColor: "#42A5F5",
+      label: "Parking Hours",
+      backgroundColor: "#3b82f6",
+      borderRadius: 4,
       data: props.stats.hours,
+      yAxisID: "y",
     },
     {
-      label: "Spent (₹)",
-      backgroundColor: "#66BB6A",
+      label: "Amount Spent (₹)",
+      backgroundColor: "#10b981",
+      borderRadius: 4,
       data: props.stats.revenue,
+      yAxisID: "y1",
     },
   ],
 };
 
 const chartOptions = {
   responsive: true,
+  maintainAspectRatio: false,
   plugins: {
-    legend: { position: "top" },
-    title: { display: true, text: "Parking & Spent" },
+    legend: {
+      position: "top",
+      labels: {
+        usePointStyle: true,
+      },
+    },
+    tooltip: {
+      callbacks: {
+        label: function (context) {
+          let label = context.dataset.label || "";
+          if (label) {
+            label += ": ";
+          }
+          if (context.datasetIndex === 0) {
+            label += context.parsed.y + " hours";
+          } else {
+            label += "₹" + context.parsed.y.toFixed(2);
+          }
+          return label;
+        },
+      },
+    },
+  },
+  scales: {
+    y: {
+      type: "linear",
+      display: true,
+      position: "left",
+      title: {
+        display: true,
+        text: "Parking Hours",
+      },
+    },
+    y1: {
+      type: "linear",
+      display: true,
+      position: "right",
+      title: {
+        display: true,
+        text: "Amount (₹)",
+      },
+      grid: {
+        drawOnChartArea: false,
+      },
+      ticks: {
+        callback: function (value) {
+          return "₹" + value;
+        },
+      },
+    },
   },
 };
 </script>
+
+<style scoped>
+.chart-container {
+  position: relative;
+  height: 300px;
+  width: 100%;
+}
+
+.user-stats-chart {
+  width: 100%;
+  height: 100%;
+}
+</style>

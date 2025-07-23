@@ -22,13 +22,13 @@
             <div>
               <small class="text-muted">From</small>
               <p class="mb-0 fw-bold">
-                {{ formatTime("at", reservation.reserved_at) }}
+                {{ formatTime(reservation.reserved_at) }}
               </p>
             </div>
             <div>
               <small class="text-muted">To</small>
               <p class="mb-0 fw-bold">
-                {{ formatTime("till", reservation.reserved_till) }}
+                {{ formatTime(reservation.reserved_till) }}
               </p>
             </div>
           </div>
@@ -63,26 +63,27 @@ defineProps({
 });
 
 defineEmits(["checkIn", "cancel"]);
-const formatTime = (value, timestamp) => {
+const formatTime = (timestamp) => {
   if (!timestamp) return "-";
 
-  // Remove trailing whitespace or carriage return
-  timestamp = timestamp.trim();
+  try {
+    timestamp = timestamp.trim();
 
-  const [datePart, timePart] = timestamp.split("T");
-  const [year, month, day] = datePart.split("-").map(Number);
-  const [hour, minute] = timePart.split(":").map(Number);
+    const utcDate = new Date(timestamp);
 
-  const date = new Date(year, month - 1, day, hour, minute);
+    if (isNaN(utcDate)) return "Invalid Date";
 
-  if (isNaN(date)) return "Invalid Date";
-
-  return date.toLocaleString([], {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+    return utcDate.toLocaleString([], {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+  } catch (error) {
+    console.error("Error formatting timestamp:", timestamp, error);
+    return "Invalid Date";
+  }
 };
 </script>

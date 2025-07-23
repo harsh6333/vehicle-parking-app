@@ -17,6 +17,11 @@
           link: '/admin/all_lots',
           icon: 'bi bi-clock-history',
         },
+        {
+          title: 'Summary',
+          link: '/admin/statistics',
+          icon: 'bi bi-clock-history',
+        },
       ]"
     />
 
@@ -75,11 +80,14 @@
       </transition>
     </div>
   </div>
+  <!-- Error Toast -->
+  <ErrorToast v-if="error" :message="error" @dismiss="error = null" />
 </template>
 
 <script setup>
 import LotCard from "@/components/AdminDashboard/AllLots.vue";
 import LotForm from "@/components/AdminDashboard/LotForm.vue";
+import ErrorToast from "@/components/Common/ErrorToast.vue";
 import NavigationBar from "@/components/Common/NavigationBar.vue";
 import {
   fetchLots,
@@ -91,42 +99,61 @@ import { ref, onMounted } from "vue";
 const lots = ref([]);
 const loading = ref(false);
 const spots = ref([]);
+const error = ref(null);
 const expandedLotId = ref(null);
 const form = ref({ id: null });
 
 const loadLots = async () => {
   loading.value = true;
+  error.value = "";
   try {
     const res = await fetchLots();
     lots.value = res.data;
   } catch (err) {
     console.error("Failed to load lots", err);
+    error.value =
+      err?.response?.data?.msg ||
+      "Failed to load parking lots. Please try again.";
   } finally {
     loading.value = false;
   }
 };
 
 const handleViewSpots = async (lotId) => {
-  if (expandedLotId.value === lotId) {
-    expandedLotId.value = null;
-    return;
+  error.value = "";
+  try {
+    if (expandedLotId.value === lotId) {
+      expandedLotId.value = null;
+      return;
+    }
+    expandedLotId.value = lotId;
+
+    const res = await fetchSpotsForNow(lotId);
+    spots.value = res.data.spots;
+  } catch (err) {
+    console.error(`Failed to fetch spots for lot ${lotId}`, err);
+    error.value =
+      err?.response?.data?.msg ||
+      `Could not fetch spots for Lot ID ${lotId}. Please try again.`;
   }
-  expandedLotId.value = lotId;
-  const res = await fetchSpotsForNow(lotId);
-  spots.value = res.data.spots;
 };
 
 const editLot = (lot) => {
   form.value = { ...lot };
+  error.value = "";
 };
 
 const handleUpdate = async (updatedLot) => {
+  error.value = "";
   try {
     await updateLot(updatedLot.id, updatedLot);
     form.value = { id: null };
     await loadLots();
   } catch (err) {
-    console.error("Update failed", err);
+    console.error(`Update failed for lot ${updatedLot.id}`, err);
+    error.value =
+      err?.response?.data?.msg ||
+      `Update failed for Lot ID ${updatedLot.id}. Please check the data and try again.`;
   }
 };
 

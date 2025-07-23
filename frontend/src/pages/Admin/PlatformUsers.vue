@@ -17,6 +17,11 @@
           link: '/admin/all_lots',
           icon: 'bi bi-clock-history',
         },
+        {
+          title: 'Summary',
+          link: '/admin/statistics',
+          icon: 'bi bi-clock-history',
+        },
       ]"
     />
 
@@ -60,22 +65,30 @@
       </div>
     </div>
   </div>
+  <!-- Error Toast -->
+  <ErrorToast v-if="error" :message="error" @dismiss="error = null" />
 </template>
 
 <script setup>
+import ErrorToast from "@/components/Common/ErrorToast.vue";
 import NavigationBar from "@/components/Common/NavigationBar.vue";
 import { fetchUsers } from "@/services/adminService";
 import { ref, onMounted } from "vue";
 
 const users = ref([]);
 const loading = ref(true);
+const error = ref(null);
 
 onMounted(async () => {
+  error.value = null;
+  loading.value = true;
   try {
     const res = await fetchUsers();
     users.value = res.data;
   } catch (err) {
     console.error("Failed to fetch users", err);
+    error.value =
+      err?.response?.data?.msg || "Failed to load users. Please try again.";
   } finally {
     loading.value = false;
   }

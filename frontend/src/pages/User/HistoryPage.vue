@@ -28,6 +28,8 @@
       </div>
     </div>
   </div>
+  <!-- Error Toast -->
+  <ErrorToast v-if="error" :message="error" @dismiss="error = null" />
 </template>
 
 <script setup>
@@ -37,7 +39,12 @@ import HistoryHeader from "@/components/UserDashboard/HistoryPage/HistoryHeader.
 import HistoryStats from "@/components/UserDashboard/HistoryPage/HistoryStats.vue";
 import HistoryTable from "@/components/UserDashboard/HistoryPage/HistoryTable.vue";
 
-import { getHistory, releaseSpot } from "@/services/userService";
+import {
+  getHistory,
+  releaseSpot,
+  triggerCSVExport,
+} from "@/services/userService";
+import ErrorToast from "@/components/Common/ErrorToast.vue";
 
 // State
 const history = ref([]);
@@ -46,6 +53,7 @@ const currentPage = ref(1);
 const itemsPerPage = 10;
 const totalItems = ref(0);
 const loading = ref(false);
+const error = ref(null);
 
 const navigationItems = [
   {
@@ -57,6 +65,12 @@ const navigationItems = [
     title: "History",
     link: "/user/parking_history",
     icon: "bi bi-clock-history",
+  },
+  {
+    title: "Statistics",
+    link: "/user/statistics",
+    icon: "bi-graph-up",
+    active: true,
   },
 ];
 
@@ -83,10 +97,10 @@ const pages = computed(() => {
   return range;
 });
 
-// Methods
 const loadHistory = async () => {
+  error.value = null;
+  loading.value = true;
   try {
-    loading.value = true;
     const params = {
       page: currentPage.value,
       limit: itemsPerPage,
@@ -97,24 +111,23 @@ const loadHistory = async () => {
     totalItems.value = res.data.length || 0;
   } catch (err) {
     console.error("Failed to load history:", err);
+    error.value = err?.response?.data?.msg || "Failed to load history.";
   } finally {
     loading.value = false;
   }
 };
 
-const calculateDuration = (start, end) => {
-  if (!start || !end) return 0;
-  const diff = new Date(end) - new Date(start);
-  return (diff / (1000 * 60 * 60)).toFixed(1);
-};
+function calculateDuration(start, end) {
+  const diff = (new Date(end) - new Date(start)) / 3600000;
+  return Math.round(diff * 10) / 10;
+}
 
-const calculateAmount = (entry) => {
-  const duration = calculateDuration(
-    entry.reserved_at,
-    entry.leaving_timestamp || entry.reserved_till
+function calculateAmount(entry) {
+  const rate = entry.rate_per_hour || 20; // fallback if not present
+  return Math.round(
+    calculateDuration(entry.reserved_at, entry.reserved_till) * rate
   );
-  return (duration * entry.hourlyrate).toFixed(2);
-};
+}
 
 const goToPage = (page) => {
   currentPage.value = page;
@@ -136,18 +149,27 @@ const nextPage = () => {
 };
 
 const cancelReservationfunc = async (id, reserved_at) => {
+  error.value = null;
   if (confirm("Are you sure you want to cancel this reservation?")) {
     try {
       await releaseSpot(id, reserved_at);
       await loadHistory();
-    } catch (error) {
-      console.error("Error cancelling reservation:", error);
+    } catch (err) {
+      console.error("Error cancelling reservation:", err);
+      error.value = err?.response?.data?.msg || "Failed to cancel reservation.";
     }
   }
 };
 
-const exportToCSV = () => {
-  console.log("Export to CSV triggered");
+const exportToCSV = async () => {
+  error.value = null;
+  try {
+    await triggerCSVExport();
+    alert("CSV export has been triggered. Check your email.");
+  } catch (err) {
+    console.error("CSV export failed:", err);
+    error.value = err?.response?.data?.msg || "Failed to trigger CSV export.";
+  }
 };
 
 onMounted(loadHistory);

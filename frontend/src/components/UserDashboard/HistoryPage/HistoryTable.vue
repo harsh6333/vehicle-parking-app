@@ -71,7 +71,7 @@
                 <button
                   v-if="!entry.leaving_timestamp"
                   class="btn btn-sm btn-outline-danger"
-                  @click="$emit('cancel', entry.id, entry.reserved_at)"
+                  @click="$emit('cancel', entry.spot_id, entry.reserved_at)"
                   title="Cancel Reservation"
                 >
                   <i class="bi bi-x-circle"></i>

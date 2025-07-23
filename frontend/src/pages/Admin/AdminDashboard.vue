@@ -18,6 +18,11 @@
           link: '/admin/all_lots',
           icon: 'bi bi-clock-history',
         },
+        {
+          title: 'Summary',
+          link: '/admin/statistics',
+          icon: 'bi bi-clock-history',
+        },
       ]"
     />
 
@@ -231,7 +236,7 @@ const loadDashboard = async () => {
     const res = await fetchDashboardData();
     dashboardData.value = res.data;
   } catch (err) {
-    error.value = "Failed to load dashboard data";
+    error.value = err.response?.data?.msg || "Failed to load dashboard data";
     console.error(err);
   } finally {
     loading.value = false;
@@ -249,7 +254,7 @@ const handleSubmit = async (data) => {
     await loadDashboard();
     // resetForm();
   } catch (err) {
-    error.value = err.response?.data?.message || "Failed to save parking lot";
+    error.value = err.response?.data?.msg || "Failed to save parking lot";
   } finally {
     loading.value = false;
   }

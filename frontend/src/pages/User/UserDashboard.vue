@@ -5,12 +5,18 @@
         {
           title: 'Dashboard',
           link: '/user/dashboard',
-          icon: 'bi bi-speedometer2',
+          icon: 'bi-speedometer2',
         },
         {
           title: 'History',
           link: '/user/parking_history',
-          icon: 'bi bi-clock-history',
+          icon: 'bi-clock-history',
+        },
+        {
+          title: 'Statistics',
+          link: '/user/statistics',
+          icon: 'bi-graph-up',
+          active: true,
         },
       ]"
     />
@@ -45,6 +51,8 @@
       </div>
     </div>
   </div>
+  <!-- Error Toast -->
+  <ErrorToast v-if="error" :message="error" @dismiss="error = null" />
 </template>
 
 <script setup>
@@ -64,12 +72,14 @@ import {
   releaseSpot,
   getHistory,
 } from "@/services/userService";
+import ErrorToast from "@/components/Common/ErrorToast.vue";
 
 const auth = useAuthStore();
 const router = useRouter();
 const lots = ref([]);
 const currentReservation = ref(null);
 const history = ref([]);
+const error = ref(null);
 const selectedDate = ref(new Date().toISOString().split("T")[0]);
 
 // Computed properties
@@ -106,6 +116,11 @@ const reserveSpotfunc = async (spotId, hours = 1) => {
     await loadLots();
     await loadHistory();
   } catch (err) {
+    const message =
+      err.response?.data?.msg ||
+      err.msg ||
+      "Failed to reserve the spot. Please try again.";
+    error.value = message;
     console.error("Failed to reserve spot:", err);
   }
 };

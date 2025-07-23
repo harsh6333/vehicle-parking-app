@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Parking Reminder</title>
+  </head>
+  <body>
+    <h2>Hello {{ user.username }},</h2>
+    <p>This is a reminder about your upcoming parking reservations tomorrow:</p>
+
+    <ul>
+      {% for reservation in reservations %}
+      <li>
+        <strong>Location:</strong> {{ reservation.spot.lot.prime_location_name
+        }}<br />
+        <strong>Spot:</strong> {{ reservation.spot.id }}<br />
+        <strong>Time:</strong> {{ reservation.reserved_at.strftime('%I:%M %p')
+        }} to {{ reservation.reserved_till.strftime('%I:%M %p') }}
+      </li>
+      {% endfor %}
+    </ul>
+
+    <p>Thank you for using our parking service!</p>
+  </body>
+</html>
