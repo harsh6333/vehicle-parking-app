@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Admin Monthly Report - {{ month }}</title>
+    <style>
+      body {
+        font-family: Arial;
+      }
+      h2,
+      h3 {
+        margin-top: 30px;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin-bottom: 20px;
+      }
+      th,
+      td {
+        border: 1px solid #ddd;
+        padding: 8px;
+      }
+      th {
+        background-color: #f4f4f4;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Admin Monthly Report - {{ month }}</h1>
+    <h3>Total Reservations: {{ reservations|length }}</h3>
+    <h3>Total Revenue: ₹{{ "%.2f"|format(total_cost) }}</h3>
+    <h3>Total Hours: {{ "%.2f"|format(total_hours) }} hrs</h3>
+
+    <h2>Breakdown by User</h2>
+    {% for username, res in reservations_by_user.items() %}
+    <h3>User: {{ username }} ({{ res|length }} reservations)</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Lot</th>
+          <th>Spot</th>
+          <th>Duration</th>
+          <th>Cost</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in res %}
+        <tr>
+          <td>{{ r.reserved_at.strftime('%Y-%m-%d') }}</td>
+          <td>{{ r.spot.lot.prime_location_name }}</td>
+          <td>{{ r.spot.id }}</td>
+          <td>
+            {{ "%.2f"|format((r.reserved_till -
+            r.reserved_at).total_seconds()/3600) }} hrs
+          </td>
+          <td>₹{{ "%.2f"|format(r.parking_cost or 0) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endfor %}
+
+    <h2>Breakdown by Parking Lot</h2>
+    {% for lot_name, res in reservations_by_lot.items() %}
+    <h3>Lot: {{ lot_name }} ({{ res|length }} reservations)</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>User</th>
+          <th>Spot</th>
+          <th>Duration</th>
+          <th>Cost</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in res %}
+        <tr>
+          <td>{{ r.reserved_at.strftime('%Y-%m-%d') }}</td>
+          <td>{{ r.user.username }}</td>
+          <td>{{ r.spot.id }}</td>
+          <td>
+            {{ "%.2f"|format((r.reserved_till -
+            r.reserved_at).total_seconds()/3600) }} hrs
+          </td>
+          <td>₹{{ "%.2f"|format(r.parking_cost or 0) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endfor %}
+  </body>
+</html>

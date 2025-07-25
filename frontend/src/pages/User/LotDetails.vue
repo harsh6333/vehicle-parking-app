@@ -61,6 +61,15 @@
           </div>
 
           <!-- Reservation Form -->
+          <div class="mb-2">
+            <label class="form-label small mb-1">Reservation Date</label>
+            <input
+              type="date"
+              v-model="dates[spot.id]"
+              class="form-control form-control-sm"
+              :min="minDate"
+            />
+          </div>
           <div class="reservation-form">
             <div class="mb-2">
               <label class="form-label small mb-1">Start Time</label>
@@ -164,6 +173,9 @@ const fetchSpotsfunc = async () => {
   }
 };
 
+const dates = ref({});
+const minDate = new Date().toISOString().split("T")[0]; // today
+
 const reserveSpotfunc = async (spotId) => {
   error.value = null;
   try {
@@ -171,15 +183,19 @@ const reserveSpotfunc = async (spotId) => {
     const timeStr = startTimes.value[spotId] || "00:00";
     const [hour, minute] = timeStr.split(":").map(Number);
 
-    const today = new Date();
-    const localStart = new Date(
-      today.getFullYear(),
-      today.getMonth(),
-      today.getDate(),
-      hour,
-      minute
-    );
+    // const today = new Date();
+    // const localStart = new Date(
+    //   today.getFullYear(),
+    //   today.getMonth(),
+    //   today.getDate(),
+    //   hour,
+    //   minute
+    // );
 
+    // const start_time = localStart.toISOString();
+    const dateStr = dates.value[spotId] || minDate;
+    const [year, month, day] = dateStr.split("-").map(Number);
+    const localStart = new Date(year, month - 1, day, hour, minute);
     const start_time = localStart.toISOString();
 
     await reserveSpot(spotId, start_time, duration);

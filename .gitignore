@@ -7,15 +7,15 @@ __pycache__/
 .env.*
 
 # === BACKEND (Python / Flask) ===
-backend/venv/
-backend/instance/
-backend/.mypy_cache/
-backend/.pytest_cache/
-backend/*.sqlite3
-backend/*.db
-backend/*.egg-info/
-backend/*.pyo
-backend/*.pyd
+server/venv/
+server/instance/
+server/.mypy_cache/
+server/.pytest_cache/
+server/*.sqlite3
+server/*.db
+server/*.egg-info/
+server/*.pyo
+server/*.pyd
 
 # VSCode
 .vscode/
