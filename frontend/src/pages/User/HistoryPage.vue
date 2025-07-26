@@ -65,12 +65,12 @@ const navigationItems = [
     title: "History",
     link: "/user/parking_history",
     icon: "bi bi-clock-history",
+    active: true,
   },
   {
     title: "Statistics",
     link: "/user/statistics",
     icon: "bi-graph-up",
-    active: true,
   },
 ];
 

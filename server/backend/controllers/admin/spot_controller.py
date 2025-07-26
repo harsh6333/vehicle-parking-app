@@ -8,7 +8,14 @@ from backend import db
 
 class SpotController:
 
-    # Current Spot Status
+    def make_aware(self, dt):
+        """Ensure datetime is timezone-aware in UTC."""
+        if dt is None:
+            return None
+        if dt.tzinfo is None:
+            return dt.replace(tzinfo=timezone.utc)
+        return dt.astimezone(timezone.utc)
+
     def current_spot_status(self, lot_id):
         try:
             now = datetime.now(timezone.utc)
@@ -17,7 +24,11 @@ class SpotController:
 
             for spot in spots:
                 current_reservation = next(
-                    (r for r in spot.reservations if r.reserved_at and r.reserved_till and r.reserved_at <= now <= r.reserved_till),
+                    (
+                        r for r in spot.reservations
+                        if r.reserved_at and r.reserved_till
+                        and self.make_aware(r.reserved_at) <= now <= self.make_aware(r.reserved_till)
+                    ),
                     None
                 )
 
@@ -25,8 +36,8 @@ class SpotController:
                 if current_reservation:
                     reservation_info = {
                         "user_id": current_reservation.user_id,
-                        "reserved_at": current_reservation.reserved_at.astimezone(timezone.utc).isoformat(),
-                        "reserved_till": current_reservation.reserved_till.astimezone(timezone.utc).isoformat(),
+                        "reserved_at": self.make_aware(current_reservation.reserved_at).isoformat(),
+                        "reserved_till": self.make_aware(current_reservation.reserved_till).isoformat(),
                     }
 
                 result.append({
@@ -40,6 +51,7 @@ class SpotController:
         except Exception as e:
             db.session.rollback()
             return jsonify({"msg": "Failed to fetch spot status", "error": str(e)}), 500
+
 
 
     # Spot Reservation History

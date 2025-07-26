@@ -91,7 +91,7 @@
       class="col-lg-7 d-none d-lg-flex align-items-center justify-content-center bg-light"
     >
       <img
-        src="/havetoadd.svg"
+        src="@/assets/heroImage.png"
         alt="Register Illustration"
         class="img-fluid p-5"
         style="max-height: 80%"

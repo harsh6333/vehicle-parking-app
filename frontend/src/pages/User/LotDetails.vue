@@ -61,24 +61,25 @@
           </div>
 
           <!-- Reservation Form -->
-          <div class="mb-2">
-            <label class="form-label small mb-1">Reservation Date</label>
-            <input
-              type="date"
-              v-model="dates[spot.id]"
-              class="form-control form-control-sm"
-              :min="minDate"
-            />
-          </div>
+
           <div class="reservation-form">
-            <div class="mb-2">
-              <label class="form-label small mb-1">Start Time</label>
-              <input
-                type="time"
-                v-model="startTimes[spot.id]"
-                class="form-control form-control-sm"
+            <div class="mb-3">
+              <label class="form-label small mb-1">Start Date & Time</label>
+
+              <VueDatePicker
+                v-model="dateTimes[spot.id]"
+                :min-date="new Date()"
+                :enable-time-picker="true"
+                :enable-seconds="false"
+                :is-24="false"
+                auto-apply
+                placeholder="Select date and time"
+                :prevent-min-max-navigation="false"
+                :format="'dd MMM yyyy hh:mm aa'"
+                :model-auto="false"
               />
             </div>
+
             <div class="mb-3">
               <label class="form-label small mb-1">Duration (hours)</label>
               <input
@@ -141,6 +142,12 @@ import { ref, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { fetchSpots, reserveSpot } from "@/services/userService";
 import ErrorToast from "@/components/Common/ErrorToast.vue";
+import VueDatePicker from "@vuepic/vue-datepicker";
+import "@vuepic/vue-datepicker/dist/main.css";
+
+// Inside setup()
+// const format = ref("dd/MM/yyyy hh:mm aa");
+const dateTimes = ref({});
 
 const router = useRouter();
 const route = useRoute();
@@ -149,7 +156,6 @@ const lotId = route.params.id;
 const lot = ref({});
 const spots = ref([]);
 const durations = ref({});
-const startTimes = ref({});
 
 const goBack = () => {
   router.go(-1);
@@ -173,29 +179,11 @@ const fetchSpotsfunc = async () => {
   }
 };
 
-const dates = ref({});
-const minDate = new Date().toISOString().split("T")[0]; // today
-
 const reserveSpotfunc = async (spotId) => {
   error.value = null;
   try {
     const duration = Number(durations.value[spotId] || 1);
-    const timeStr = startTimes.value[spotId] || "00:00";
-    const [hour, minute] = timeStr.split(":").map(Number);
-
-    // const today = new Date();
-    // const localStart = new Date(
-    //   today.getFullYear(),
-    //   today.getMonth(),
-    //   today.getDate(),
-    //   hour,
-    //   minute
-    // );
-
-    // const start_time = localStart.toISOString();
-    const dateStr = dates.value[spotId] || minDate;
-    const [year, month, day] = dateStr.split("-").map(Number);
-    const localStart = new Date(year, month - 1, day, hour, minute);
+    const localStart = new Date(dateTimes.value[spotId]);
     const start_time = localStart.toISOString();
 
     await reserveSpot(spotId, start_time, duration);
@@ -214,7 +202,10 @@ const reserveSpotfunc = async (spotId) => {
 const formatTime = (ts) => {
   if (!ts) return "-";
   const date = new Date(ts);
-  return date.toLocaleTimeString("en-IN", {
+  return date.toLocaleString("en-IN", {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
     hour12: true,
@@ -326,5 +317,16 @@ onMounted(fetchSpotsfunc);
 .reserve-btn {
   font-size: 0.85rem;
   padding: 0.25rem 0.5rem;
+}
+.dp__main {
+  min-width: 280px;
+}
+
+.dp__instance_calendar {
+  min-height: 260px;
+}
+
+.dp__time_col {
+  width: 100%;
 }
 </style>

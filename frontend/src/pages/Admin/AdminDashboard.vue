@@ -7,6 +7,7 @@
           title: 'Dashboard',
           link: '/admin/dashboard',
           icon: 'bi bi-speedometer2',
+          active: true,
         },
         {
           title: 'All Users',
@@ -22,6 +23,11 @@
           title: 'Summary',
           link: '/admin/statistics',
           icon: 'bi bi-clock-history',
+        },
+        {
+          title: 'Search',
+          link: '/admin/search',
+          icon: 'bi-search',
         },
       ]"
     />

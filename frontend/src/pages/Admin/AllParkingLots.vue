@@ -16,11 +16,17 @@
           title: 'All Lots',
           link: '/admin/all_lots',
           icon: 'bi bi-clock-history',
+          active: true,
         },
         {
           title: 'Summary',
           link: '/admin/statistics',
           icon: 'bi bi-clock-history',
+        },
+        {
+          title: 'Search',
+          link: '/admin/search',
+          icon: 'bi-search',
         },
       ]"
     />

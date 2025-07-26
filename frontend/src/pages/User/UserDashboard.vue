@@ -6,6 +6,7 @@
           title: 'Dashboard',
           link: '/user/dashboard',
           icon: 'bi-speedometer2',
+          active: true,
         },
         {
           title: 'History',
@@ -16,7 +17,6 @@
           title: 'Statistics',
           link: '/user/statistics',
           icon: 'bi-graph-up',
-          active: true,
         },
       ]"
     />

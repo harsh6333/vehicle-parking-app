@@ -11,6 +11,7 @@
           title: 'All Users',
           link: '/admin/all_users',
           icon: 'bi bi-clock-history',
+          active: true,
         },
         {
           title: 'All Lots',
@@ -21,6 +22,11 @@
           title: 'Summary',
           link: '/admin/statistics',
           icon: 'bi bi-clock-history',
+        },
+        {
+          title: 'Search',
+          link: '/admin/search',
+          icon: 'bi-search',
         },
       ]"
     />

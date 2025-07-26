@@ -34,11 +34,6 @@
 
         <!-- Right Menu -->
         <div class="d-flex align-items-center gap-3">
-          <!-- Notifications -->
-          <div class="text-white">
-            <i class="bi bi-bell-fill fs-5"></i>
-          </div>
-
           <!-- User Dropdown -->
           <div class="dropdown">
             <button

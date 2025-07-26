@@ -3,7 +3,7 @@ from backend.models.user import User
 from flask import Blueprint, request, jsonify, make_response
 from flask_jwt_extended import (
     create_access_token, set_access_cookies, unset_jwt_cookies,
-    jwt_required, get_jwt
+    jwt_required, get_jwt,get_jwt_identity
 )
 from datetime import timedelta
 import traceback
@@ -100,3 +100,50 @@ def logout():
     except Exception as e:
         traceback.print_exc()
         return jsonify({'msg': 'Logout failed', 'error': str(e)}), 500
+
+
+
+@auth_bp.route("/profile", methods=["PUT"])
+@jwt_required()
+def update_profile():
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+
+    if not user:
+        return jsonify({"msg": "User not found"}), 404
+
+    data = request.json
+    user.username = data.get("username", user.username)
+    user.email = data.get("email", user.email)
+
+    try:
+        db.session.commit()
+        return jsonify({
+            "id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "is_admin": user.is_admin,
+            "created_at": user.created_at.isoformat() if user.created_at else None
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"msg": "Update failed", "error": str(e)}), 500
+
+
+
+@auth_bp.route("/profile", methods=["GET"])
+@jwt_required()
+def get_profile():
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+
+    if not user:
+        return jsonify({"msg": "User not found"}), 404
+
+    return jsonify({
+        "id": user.id,
+        "username": user.username,
+        "email": user.email,
+        "is_admin": user.is_admin,
+        "created_at": user.created_at.isoformat() if user.created_at else None
+    })

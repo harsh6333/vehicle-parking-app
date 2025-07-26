@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 from backend import db
 from backend.models.parking_spot import ParkingSpot
 from backend.models.reservation import Reservation
-from server.backend.utils.timehelper import parse_iso_datetime
+from backend.utils.timehelper import parse_iso_datetime
 from backend.extensions import cache
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -27,7 +27,7 @@ class ReservationController:
             except ValueError:
                 return jsonify({"error": "Invalid start_time format"}), 400
             
-            if start_time < datetime.now(timezone.utc):
+            if start_time > datetime.now(timezone.utc):
                 return jsonify({"error": "Reservation time must be in the future"}), 400
 
             end_time = start_time + timedelta(hours=duration_hours)

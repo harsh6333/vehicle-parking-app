@@ -10,11 +10,12 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 load_dotenv()
 
+
 celery = Celery(
     "backend",
     broker=os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0"),
     backend=os.getenv("CELERY_RESULT_BACKEND", "redis://localhost:6379/1"),
-    include=["backend.services.tasks"],
+    include=["backend.tasks.tasks"],
 )
 def create_app(test_config=None):
     """Application factory with improved Celery support"""
@@ -48,14 +49,14 @@ def create_app(test_config=None):
         task_ignore_result=False,
         beat_schedule={
             "daily-reminder": {
-                "task": "backend.services.tasks.send_daily_reminders",
+                "task": "backend.tasks.tasks.send_daily_reminders",
                 "schedule": crontab(
                     hour=18,
                     minute=18,
                 ),
             },
             "monthly-report": {
-                "task": "backend.services.tasks.send_monthly_reports",
+                "task": "backend.tasks.tasks.send_monthly_reports",
                 "schedule": crontab(hour=22, minute=57, day_of_month="4"),
             },
            

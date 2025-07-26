@@ -9,7 +9,7 @@ export_bp = Blueprint('user_export', __name__)
 @user_required
 def trigger_user_export():
     user_id =get_jwt_identity()
-    from backend.services.tasks import generate_csv_export  # ⬅ moved inside
+    from backend.tasks.tasks import generate_csv_export  # ⬅ moved inside
     generate_csv_export.delay(user_id)
     return jsonify({"message": "CSV export job started"}), 202
 

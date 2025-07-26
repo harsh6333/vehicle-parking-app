@@ -23,3 +23,18 @@ export const fetchSpotsForNow = (lotId) =>
 export const fetchSpotHistory = (spotId) =>
   axiosInstance.get(`/spots/${spotId}/history`);
 export const fetchAdminStats = () => axiosInstance.get(`${API}/stats`);
+
+export const searchLots = (q, page = 1, per_page = 20) =>
+  axiosInstance.get("/search/lots", {
+    params: { q, page, per_page },
+  });
+
+export const searchSpots = (status, lotId = null) =>
+  axiosInstance.get("/search/spots", {
+    params: { status, lot_id: lotId },
+  });
+
+export const searchUsers = (q, page = 1, per_page = 20) =>
+  axiosInstance.get("/search/users", {
+    params: { q, page, per_page },
+  });

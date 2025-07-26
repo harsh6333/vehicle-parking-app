@@ -178,18 +178,22 @@ function getStatusClass(entry) {
   if (entry.leaving_timestamp) return "bg-success text-white";
   if (new Date(entry.reserved_till) < new Date())
     return "bg-secondary text-white";
+  if (new Date(entry.parking_timestamp) < new Date())
+    return "bg-success text-white";
   return "bg-warning text-dark";
 }
 
 function getStatusIcon(entry) {
   if (entry.leaving_timestamp) return "bi bi-check-circle";
   if (new Date(entry.reserved_till) < new Date()) return "bi bi-clock";
+  if (new Date(entry.parking_timestamp) < new Date()) return "bi bi-clock";
   return "bi bi-hourglass-split";
 }
 
 function getStatusText(entry) {
   if (entry.leaving_timestamp) return "Completed";
   if (new Date(entry.reserved_till) < new Date()) return "Expired";
+  if (new Date(entry.parking_timestamp) < new Date()) return "Occupied";
   return "Upcoming";
 }
 </script>

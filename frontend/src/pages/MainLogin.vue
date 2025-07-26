@@ -76,7 +76,7 @@
       class="col-lg-7 d-none d-lg-flex align-items-center justify-content-center bg-light"
     >
       <img
-        src="/illustration-parking.svg"
+        src="@/assets/heroImage.png"
         alt="Login Illustration"
         class="img-fluid p-5"
         style="max-height: 80%"
@@ -105,11 +105,10 @@ const handleLogin = async () => {
         password: password.value,
       },
       {
-        withCredentials: true, // ✅ Send and receive cookies
+        withCredentials: true,
       }
     );
 
-    // Fetch user info from protected endpoint (optional)
     const res = await axios.get("http://127.0.0.1:5000/api/auth/me", {
       withCredentials: true,
     });

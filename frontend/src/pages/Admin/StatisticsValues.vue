@@ -85,15 +85,28 @@ onMounted(async () => {
         {
           title: 'Dashboard',
           link: '/admin/dashboard',
-          icon: 'bi-speedometer2',
+          icon: 'bi bi-speedometer2',
         },
-        { title: 'Users', link: '/admin/all_users', icon: 'bi-people' },
-        { title: 'Lots', link: '/admin/all_lots', icon: 'bi-p-square' },
+        {
+          title: 'All Users',
+          link: '/admin/all_users',
+          icon: 'bi bi-clock-history',
+        },
+        {
+          title: 'All Lots',
+          link: '/admin/all_lots',
+          icon: 'bi bi-clock-history',
+        },
         {
           title: 'Summary',
-          link: '/admin/summary',
-          icon: 'bi-graph-up',
+          link: '/admin/statistics',
+          icon: 'bi bi-clock-history',
           active: true,
+        },
+        {
+          title: 'Search',
+          link: '/admin/search',
+          icon: 'bi-search',
         },
       ]"
     />

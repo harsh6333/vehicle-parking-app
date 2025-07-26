@@ -15,7 +15,7 @@ from backend import create_app
 app = create_app()
 from celery import current_app as celery
 
-@celery.task(name="backend.services.tasks.generate_csv_export")
+@celery.task(name="backend.tasks.tasks.generate_csv_export")
 def generate_csv_export(user_id=None, admin_id=None):
     from io import StringIO
     import csv
@@ -63,7 +63,7 @@ def generate_csv_export(user_id=None, admin_id=None):
 
 
 
-@celery.task(name="backend.services.tasks.send_daily_reminders")
+@celery.task(name="backend.tasks.tasks.send_daily_reminders")
 def send_daily_reminders():
     india = pytz.timezone("Asia/Kolkata")
     tomorrow_ist = datetime.now(india).date() + timedelta(days=1)
@@ -87,7 +87,7 @@ def send_daily_reminders():
 
 
 
-@celery.task(name="backend.services.tasks.send_monthly_reports")
+@celery.task(name="backend.tasks.tasks.send_monthly_reports")
 def send_monthly_reports():
     first_day, last_day = get_previous_month_bounds_as_utc()
 

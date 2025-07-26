@@ -9,9 +9,12 @@ import AllParkingLots from "@/pages/Admin/AllParkingLots.vue";
 import PlatformUsers from "@/pages/Admin/PlatformUsers.vue";
 import StatisticsChart from "@/pages/User/StatisticsChart.vue";
 import StatisticsValues from "@/pages/Admin/StatisticsValues.vue";
+import AdminSearch from "@/pages/Admin/AdminSearch.vue";
+import HomePage from "@/pages/HomePage.vue";
+import ProfilePage from "@/pages/ProfilePage.vue";
 
 const routes = [
-  { path: "/", redirect: "/login" },
+  { path: "/", component: HomePage },
   { path: "/login", component: MainLogin },
   { path: "/register", component: RegisterPage },
   { path: "/admin/dashboard", component: AdminDashboard },
@@ -21,13 +24,18 @@ const routes = [
   { path: "/user/dashboard", component: UserDashboard },
   { path: "/user/parking_history", component: History },
   { path: "/user/statistics", component: StatisticsChart },
-
+  {
+    path: "/admin/search",
+    name: "AdminSearch",
+    component: AdminSearch,
+  },
   {
     path: "/lot/:id",
     component: LotDetails,
     name: "lot-details",
     props: true,
   },
+  { path: "/profile", component: ProfilePage },
 ];
 
 const router = createRouter({

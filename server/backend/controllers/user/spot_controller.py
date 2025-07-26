@@ -106,6 +106,8 @@ class SpotController:
             "total_spots": lot.number_of_spots,
         }
 
+        now_ist = datetime.now(KOLKATA)
+
         result = []
         for spot in spots:
             reservations = []
@@ -116,10 +118,12 @@ class SpotController:
                         reserved_at = reserved_at.replace(tzinfo=timezone.utc)
 
                     reserved_ist = reserved_at.astimezone(KOLKATA)
-                    if reserved_ist.date() == selected_date:
+
+                    # Only include future reservations on the selected date
+                    if reserved_ist.date() == selected_date and reserved_ist > now_ist:
                         reservations.append({
                             "id": r.id,
-                            "user_id": r.user_id,
+                            # "user_id": r.user_id,
                             "reserved_at": r.reserved_at.isoformat() + "Z",
                             "reserved_till": r.reserved_till.isoformat() + "Z",
                             "parking_timestamp": r.parking_timestamp.isoformat() + "Z" if r.parking_timestamp else None,
