@@ -1,9 +1,11 @@
+from datetime import datetime
 from flask import request, jsonify
 from backend.models.parking_lot import ParkingLot
 from backend.models.parking_spot import ParkingSpot
 from backend import db
 from backend.extensions import cache
 from sqlalchemy.exc import SQLAlchemyError
+from backend.models.reservation import Reservation
 
 class LotController:
     # Create Lot
@@ -137,3 +139,58 @@ class LotController:
 
         except Exception as e:
             return jsonify({"msg": "Failed to fetch lots", "error": str(e)}), 500
+    
+
+        # Delete Lot (with reservation check)
+    def delete_lot(self, lot_id):
+        try:
+            lot = ParkingLot.query.get_or_404(lot_id)
+            
+            # Check if any spots in this lot have reservations
+            has_reservations = db.session.query(
+                db.exists().where(ParkingSpot.lot_id == lot_id)
+                .where(ParkingSpot.reservations.any())
+            ).scalar()
+            
+            if has_reservations:
+                return jsonify({
+                    "msg": "Cannot delete parking lot - there are existing reservations",
+                    "error": "HAS_RESERVATIONS"
+                }), 400
+                
+            # Check for ongoing reservations (current time within reservation window)
+            current_time = datetime.utcnow()
+            has_ongoing_reservations = db.session.query(
+                db.exists().where(ParkingSpot.lot_id == lot_id)
+                .where(ParkingSpot.reservations.any(
+                    db.and_(
+                        Reservation.reserved_at <= current_time,
+                        Reservation.reserved_till >= current_time
+                    )
+                ))
+            ).scalar()
+            
+            if has_ongoing_reservations:
+                return jsonify({
+                    "msg": "Cannot delete parking lot - there are ongoing reservations",
+                    "error": "HAS_ONGOING_RESERVATIONS"
+                }), 400
+
+            # If no reservations, proceed with deletion
+            ParkingSpot.query.filter_by(lot_id=lot_id).delete()
+            db.session.delete(lot)
+            db.session.commit()
+
+            # Clear relevant cache
+            cache.delete("admin_lots")
+            cache.delete(f"lot_spots_status_{lot_id}")
+
+            return jsonify({"msg": "Lot deleted successfully"}), 200
+
+        except SQLAlchemyError as db_err:
+            db.session.rollback()
+            return jsonify({"msg": "Database error", "error": str(db_err)}), 500
+
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({"msg": "Internal Server Error", "error": str(e)}), 500

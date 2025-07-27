@@ -5,11 +5,14 @@ from email.mime.application import MIMEApplication
 from jinja2 import Environment, FileSystemLoader
 import os
 import pytz
-import pdfkit
 from datetime import datetime, timedelta
 from sqlalchemy import func
+from backend.utils.pdfreportgeneration import generate_admin_pdf_report, generate_user_pdf_report
 from backend.config import Config
 from dotenv import load_dotenv
+
+from backend.models.parking_lot import ParkingLot
+from backend.models.user import User
 load_dotenv()
 from backend.models.reservation import Reservation
 import logging
@@ -78,7 +81,9 @@ def send_reminder(user):
 
 
 
+
 def send_user_monthly_report(user, first_day, last_day):
+    print(f"{first_day,last_day}")
     reservations = Reservation.query.filter_by(user_id=user.id).filter(
         Reservation.reserved_at.between(first_day, last_day)
     ).all()
@@ -87,36 +92,33 @@ def send_user_monthly_report(user, first_day, last_day):
         (r.reserved_till - r.reserved_at).total_seconds() / 3600
         for r in reservations if r.reserved_at and r.reserved_till
     )
+    for r in reservations:
+        if r.reserved_at and r.reserved_till:
+            print(r.reserved_at)
     total_cost = sum(r.parking_cost for r in reservations if r.parking_cost)
+    total_reservations = len(reservations)
 
+    lot_usage = {}
+    for r in reservations:
+        if r.spot and r.spot.lot:
+            lot_name = r.spot.lot.prime_location_name
+            lot_usage[lot_name] = lot_usage.get(lot_name, 0) + 1
+    most_used_lot = max(lot_usage, key=lot_usage.get) if lot_usage else "N/A"
 
-    template = env.get_template('monthly_user_report.html')
-    html = template.render(
-        user=user,
-        reservations=reservations,
-        total_hours=total_hours,
-        total_cost=total_cost,
-        month=first_day.strftime("%B %Y")
-    )
-
-    pdf_file = f"user_monthly_report_{user.id}.pdf"
     try:
-        pdfkit.from_string(html, pdf_file)
-        with open(pdf_file, 'rb') as f:
-            attachment = f.read()
+        pdf_content = generate_user_pdf_report(
+            user, reservations, total_hours, total_cost, total_reservations, most_used_lot, first_day.strftime("%B %Y")
+        )
         return send_email(
             user.email,
             f"Your Monthly Parking Report - {first_day.strftime('%B %Y')}",
-            "",
-            html,
-            attachment,
-            attachment_name=pdf_file
+            "Please find attached your parking activity report.",
+            None,
+            pdf_content,
+            attachment_name=f"user_report_{user.id}.pdf"
         )
     except Exception as e:
         print(f"Failed to send user report to {user.email}: {e}")
-    finally:
-        if os.path.exists(pdf_file):
-            os.remove(pdf_file)
 
 
 def send_admin_monthly_report(admin_user, first_day, last_day):
@@ -124,54 +126,75 @@ def send_admin_monthly_report(admin_user, first_day, last_day):
         Reservation.reserved_at.between(first_day, last_day)
     ).all()
 
+    from collections import defaultdict
+    reservations_by_user = defaultdict(list)
+    reservations_by_lot = defaultdict(list)
+
+    for r in reservations:
+        if r.user and r.spot and r.spot.lot:
+            reservations_by_user[r.user.username].append(r)
+            reservations_by_lot[r.spot.lot.prime_location_name].append(r)
+
     total_hours = sum(
         (r.reserved_till - r.reserved_at).total_seconds() / 3600
         for r in reservations if r.reserved_at and r.reserved_till
     )
     total_cost = sum(r.parking_cost for r in reservations if r.parking_cost)
 
-    # Group by user and lot
-    from collections import defaultdict
-    reservations_by_user = defaultdict(list)
-    reservations_by_lot = defaultdict(list)
-
-    for r in reservations:
-        reservations_by_user[r.user.username].append(r)
-        reservations_by_lot[r.spot.lot.prime_location_name].append(r)
-
-    template = env.get_template('monthly_admin_report.html')
-    html = template.render(
-        admin=admin_user,
-        reservations=reservations,
-        reservations_by_user=reservations_by_user,
-        reservations_by_lot=reservations_by_lot,
-        total_hours=total_hours,
-        total_cost=total_cost,
-        month=first_day.strftime("%B %Y")
-    )
-
-    pdf_file = f"admin_monthly_report_{admin_user.id}.pdf"
     try:
-        pdfkit.from_string(html, pdf_file)
-        with open(pdf_file, 'rb') as f:
-            attachment = f.read()
+        pdf_content = generate_admin_pdf_report(
+            admin_user, reservations_by_user, reservations_by_lot, total_hours, total_cost, first_day.strftime("%B %Y")
+        )
         return send_email(
             admin_user.email,
             f"Admin Monthly Report - {first_day.strftime('%B %Y')}",
-            "",
-            html,
-            attachment,
-            attachment_name=pdf_file
+            "Please find attached the admin report for this month.",
+            None,
+            pdf_content,
+            attachment_name=f"admin_report_{admin_user.id}.pdf"
         )
     except Exception as e:
         print(f"Failed to send admin report: {e}")
-    finally:
-        if os.path.exists(pdf_file):
-            os.remove(pdf_file)
-
 
 
 
 
 def send_csv(to, subject, csv_data):
     return send_email(to, subject, "Please find attached your CSV report.", attachment=csv_data, attachment_name="report.csv")
+
+
+
+
+
+def send_gentle_reminder(user):
+    template = env.get_template("gentle_reminder_email.html")
+    html = template.render(user=user)
+
+    subject = "Don't forget to reserve your parking for tomorrow"
+    return send_email(user.email, subject, "", html)
+
+
+
+
+def send_gentle_reminder_to_inactive_users(start_utc, end_utc, excluded_users):
+    excluded_ids = [user.id for user in excluded_users]
+    available_lots = ParkingLot.query.count()
+
+    if available_lots == 0:
+        print("No parking lots found. Skipping gentle reminders.")
+        return
+
+    all_users = User.query.filter((User.is_admin == False) | (User.is_admin == None)).all()
+    print(f"Checking all users for non-reserved status tomorrow.")
+
+    for user in all_users:
+        if user.id in excluded_ids:
+            continue
+
+        has_reservation = Reservation.query.filter_by(user_id=user.id).filter(
+            Reservation.reserved_at.between(start_utc, end_utc)
+        ).first()
+
+        if not has_reservation:
+            print(f"Sending gentle reminder to: {user.email}")
+            send_gentle_reminder(user)

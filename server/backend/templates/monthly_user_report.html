@@ -1,10 +1,20 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <meta charset="UTF-8" />
     <title>Monthly Parking Report - {{ month }}</title>
     <style>
       body {
         font-family: Arial, sans-serif;
+        margin: 20px;
+      }
+      .summary,
+      .details {
+        margin-bottom: 20px;
+      }
+      h1,
+      h3 {
+        color: #333;
       }
       table {
         border-collapse: collapse;
@@ -15,12 +25,14 @@
         border: 1px solid #ddd;
         padding: 8px;
         text-align: left;
+        font-size: 14px;
       }
       th {
         background-color: #f2f2f2;
       }
-      .summary {
-        margin-bottom: 20px;
+      .highlight {
+        font-weight: bold;
+        color: #2c3e50;
       }
     </style>
   </head>
@@ -29,43 +41,61 @@
 
     <div class="summary">
       <h3>Summary</h3>
-      <p><strong>Total Reservations:</strong> {{ reservations|length }}</p>
       <p>
-        <strong>Total Hours Parked:</strong> {{ "%.2f"|format(total_hours) }}
+        <span class="highlight">User:</span> {{ user.username }} ({{ user.email
+        }})
       </p>
-      <p><strong>Total Cost:</strong> ₹{{ "%.2f"|format(total_cost) }}</p>
+      <p>
+        <span class="highlight">Total Reservations:</span> {{ total_reservations
+        }}
+      </p>
+      <p>
+        <span class="highlight">Total Hours Parked:</span> {{
+        "%.2f"|format(total_hours) }} hrs
+      </p>
+      <p>
+        <span class="highlight">Total Cost:</span> ₹{{ "%.2f"|format(total_cost)
+        }}
+      </p>
+      <p><span class="highlight">Most Used Lot:</span> {{ most_used_lot }}</p>
     </div>
 
-    <h3>Reservation Details</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>Date</th>
-          <th>Location</th>
-          <th>Spot</th>
-          <th>Time</th>
-          <th>Duration</th>
-          <th>Cost</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for r in reservations %}
-        <tr>
-          <td>{{ r.reserved_at.strftime('%Y-%m-%d') }}</td>
-          <td>{{ r.spot.lot.prime_location_name }}</td>
-          <td>{{ r.spot.id }}</td>
-          <td>
-            {{ r.reserved_at.strftime('%I:%M %p') }} - {{
-            r.reserved_till.strftime('%I:%M %p') }}
-          </td>
-          <td>
-            {{ "%.2f"|format((r.reserved_till -
-            r.reserved_at).total_seconds()/3600) }} hrs
-          </td>
-          <td>₹{{ "%.2f"|format(r.parking_cost) }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+    <div class="details">
+      <h3>Reservation Details</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Location</th>
+            <th>Spot</th>
+            <th>Time</th>
+            <th>Duration (hrs)</th>
+            <th>Cost (₹)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in reservations %}
+          <tr>
+            <td>{{ r.reserved_at.strftime('%Y-%m-%d') }}</td>
+            <td>
+              {{ r.spot.lot.prime_location_name if r.spot and r.spot.lot else
+              "N/A" }}
+            </td>
+            <td>{{ r.spot.spot_number if r.spot else "N/A" }}</td>
+            <td>
+              {{ r.reserved_at.strftime('%I:%M %p') }} - {{
+              r.reserved_till.strftime('%I:%M %p') if r.reserved_till else "N/A"
+              }}
+            </td>
+            <td>
+              {{ "%.2f"|format((r.reserved_till - r.reserved_at).total_seconds()
+              / 3600) if r.reserved_till and r.reserved_at else "N/A" }}
+            </td>
+            <td>₹{{ "%.2f"|format(r.parking_cost) }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </body>
 </html>

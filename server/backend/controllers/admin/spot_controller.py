@@ -64,7 +64,9 @@ class SpotController:
             for reservation in reservations:
                 user = User.query.get(reservation.user_id)
                 if not user:
-                    continue  # skip if user data is not found
+                    continue 
+
+                vehicle = user.vehicles[0] if user.vehicles else None
 
                 reserved_at = reservation.reserved_at.astimezone(timezone.utc).isoformat() if reservation.reserved_at else None
                 reserved_till = reservation.reserved_till.astimezone(timezone.utc).isoformat() if reservation.reserved_till else None
@@ -92,7 +94,13 @@ class SpotController:
                     "parking_timestamp": parking_ts,
                     "leaving_timestamp": leaving_ts,
                     "status": status,
-                    "duration_minutes": round(duration_minutes, 2) if duration_minutes else None
+                    "duration_minutes": round(duration_minutes, 2) if duration_minutes else None,
+                    "vehicle": {
+                        "vehicle_number": vehicle.vehicle_number if vehicle else None,
+                        "vehicle_type": vehicle.vehicle_type if vehicle else None,
+                        "brand": vehicle.brand if vehicle else None,
+                        "color": vehicle.color if vehicle else None,
+                    } if vehicle else None
                 })
 
             return jsonify({

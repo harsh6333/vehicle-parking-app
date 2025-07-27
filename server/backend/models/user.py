@@ -11,8 +11,11 @@ class User(db.Model):
     password_hash = db.Column(db.String(128), nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
+    address = db.Column(db.String(255), nullable=True)
+    pin_code = db.Column(db.String(10), nullable=True)
+
     reservations = db.relationship('Reservation', backref='user', lazy=True)
+    vehicles = db.relationship('Vehicle', backref='user', lazy=True, cascade="all, delete-orphan")
 
     def generate_token(self):
         return create_access_token(identity=str(self.id), additional_claims={"is_admin": self.is_admin})
@@ -22,3 +25,4 @@ class User(db.Model):
     
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
+

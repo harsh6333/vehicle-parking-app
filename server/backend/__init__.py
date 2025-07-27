@@ -52,12 +52,12 @@ def create_app(test_config=None):
                 "task": "backend.tasks.tasks.send_daily_reminders",
                 "schedule": crontab(
                     hour=18,
-                    minute=18,
+                    minute=30,
                 ),
             },
             "monthly-report": {
                 "task": "backend.tasks.tasks.send_monthly_reports",
-                "schedule": crontab(hour=22, minute=57, day_of_month="4"),
+                "schedule": crontab(hour=12, minute=00, day_of_month="1"),
             },
            
         },
@@ -111,9 +111,11 @@ def initialize_database(app):
     if not User.query.filter_by(email="theoneharsh2003@gmail.com").first():
         app.logger.info("Seeding admin user...")
         admin = User(
-            username="admin",
+            username="Harsh Dubey",
             email="theoneharsh2003@gmail.com",
-            is_admin=True
+            is_admin=True,
+            address="A-12, Park Avenue, New Delhi",
+            pin_code="462016"
         )
         admin.set_password("admin123")
         db.session.add(admin)
