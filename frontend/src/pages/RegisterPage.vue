@@ -10,58 +10,90 @@
           <p class="text-muted">Create your parking account</p>
         </div>
 
-        <!-- Username -->
+        <!-- Fields -->
         <div class="mb-3">
-          <label for="username" class="form-label">Username</label>
-          <div class="input-group">
-            <span class="input-group-text bg-light">
-              <i class="bi bi-person-fill"></i>
-            </span>
+          <label class="form-label">Username</label>
+          <input
+            v-model="username"
+            type="text"
+            class="form-control"
+            placeholder="Enter username"
+          />
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Email</label>
+          <input
+            v-model="email"
+            type="email"
+            class="form-control"
+            placeholder="Enter email"
+          />
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Password</label>
+          <input
+            v-model="password"
+            type="password"
+            class="form-control"
+            placeholder="Enter password"
+          />
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Address</label>
+          <input
+            v-model="address"
+            type="text"
+            class="form-control"
+            placeholder="Enter address"
+          />
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Pincode</label>
+          <input
+            v-model="pincode"
+            type="text"
+            class="form-control"
+            placeholder="Enter pincode"
+          />
+        </div>
+
+        <!-- Vehicle Inputs -->
+        <div class="mb-3">
+          <label class="form-label">Vehicle Details</label>
+          <div v-for="(v, i) in vehicles" :key="i" class="mb-2">
             <input
-              v-model="username"
+              v-model="v.vehicle_number"
               type="text"
-              id="username"
-              class="form-control"
-              placeholder="Enter username"
+              class="form-control mb-1"
+              placeholder="Vehicle Number (e.g. KA-01-AB-1234)"
             />
-          </div>
-        </div>
-
-        <!-- Email -->
-        <div class="mb-3">
-          <label for="email" class="form-label">Email</label>
-          <div class="input-group">
-            <span class="input-group-text bg-light">
-              <i class="bi bi-envelope-fill"></i>
-            </span>
             <input
-              v-model="email"
-              type="email"
-              id="email"
-              class="form-control"
-              placeholder="Enter email"
+              v-model="v.vehicle_type"
+              type="text"
+              class="form-control mb-1"
+              placeholder="Vehicle Type (Car, Bike)"
             />
-          </div>
-        </div>
-
-        <!-- Password -->
-        <div class="mb-3">
-          <label for="password" class="form-label">Password</label>
-          <div class="input-group">
-            <span class="input-group-text bg-light">
-              <i class="bi bi-lock-fill"></i>
-            </span>
             <input
-              v-model="password"
-              type="password"
-              id="password"
-              class="form-control"
-              placeholder="Enter password"
+              v-model="v.brand"
+              type="text"
+              class="form-control mb-1"
+              placeholder="Brand (e.g. Honda)"
             />
+            <input
+              v-model="v.color"
+              type="text"
+              class="form-control"
+              placeholder="Color (e.g. Red)"
+            />
+            <hr />
           </div>
         </div>
 
-        <!-- Register Button -->
+        <!-- Submit -->
         <button @click="handleRegister" class="btn btn-success w-100 mb-3">
           Register
         </button>
@@ -74,19 +106,19 @@
           {{ success }}
         </div>
 
-        <!-- Login Link -->
+        <!-- Login -->
         <div class="text-center mt-3">
           <small>
             Already have an account?
-            <router-link to="/login" class="fw-semibold text-decoration-none">
-              Login here
-            </router-link>
+            <router-link to="/login" class="fw-semibold text-decoration-none"
+              >Login here</router-link
+            >
           </small>
         </div>
       </div>
     </div>
 
-    <!-- Right: Illustration -->
+    <!-- Right Image -->
     <div
       class="col-lg-7 d-none d-lg-flex align-items-center justify-content-center bg-light"
     >
@@ -108,6 +140,14 @@ import { useRouter } from "vue-router";
 const username = ref("");
 const email = ref("");
 const password = ref("");
+const address = ref("");
+const pincode = ref("");
+const vehicles = ref([
+  { vehicle_number: "", vehicle_type: "", brand: "", color: "" },
+  // { vehicle_number: "", vehicle_type: "", brand: "", color: "" },
+  // { vehicle_number: "", vehicle_type: "", brand: "", color: "" },
+]);
+
 const error = ref("");
 const success = ref("");
 const router = useRouter();
@@ -115,16 +155,43 @@ const router = useRouter();
 const handleRegister = async () => {
   error.value = "";
   success.value = "";
+
+  const validVehicles = vehicles.value
+    .filter((v) => v.vehicle_number && v.vehicle_number.trim() !== "")
+    .map((v) => ({
+      vehicle_number: v.vehicle_number.trim(),
+      vehicle_type: v.vehicle_type.trim(),
+      brand: v.brand.trim(),
+      color: v.color.trim(),
+    }));
+
+  if (
+    !username.value ||
+    !email.value ||
+    !password.value ||
+    !address.value ||
+    !pincode.value ||
+    validVehicles.length === 0
+  ) {
+    error.value =
+      "All fields including at least one valid vehicle are required.";
+    return;
+  }
+
   try {
     await axios.post("http://127.0.0.1:5000/api/auth/register", {
       username: username.value,
       email: email.value,
       password: password.value,
+      address: address.value,
+      pin_code: pincode.value,
+      vehicles: validVehicles,
     });
+
     success.value = "Registration successful! Redirecting...";
     setTimeout(() => router.push("/login"), 1500);
   } catch (err) {
-    error.value = err.response?.data?.msg || "Registration failed";
+    error.value = err.response?.data?.msg || "Registration failed.";
   }
 };
 </script>

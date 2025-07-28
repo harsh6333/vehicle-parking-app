@@ -42,13 +42,37 @@
               </div>
             </div>
 
+            <div class="vehicle-details">
+              <div class="detail-row">
+                <span class="detail-label">Vehicle:</span>
+                <span class="detail-value">{{
+                  record.vehicle.vehicle_number
+                }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Type:</span>
+                <span class="detail-value">{{
+                  record.vehicle.vehicle_type
+                }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Brand/Color:</span>
+                <span class="detail-value"
+                  >{{ record.vehicle.brand }} ({{ record.vehicle.color }})</span
+                >
+              </div>
+            </div>
+
             <div class="timeline">
               <div class="timeline-item">
                 <i class="bi bi-calendar-check"></i>
                 <div>
                   <div>Reserved</div>
                   <div class="time">
-                    {{ formatDateTime(record.reserved_at) }}
+                    {{ formatDateTimeIST(record.reserved_at) }}
+                  </div>
+                  <div class="time-duration">
+                    Reserved till: {{ formatDateTimeIST(record.reserved_till) }}
                   </div>
                 </div>
               </div>
@@ -60,7 +84,7 @@
                   <div class="time">
                     {{
                       record.parking_timestamp
-                        ? formatDateTime(record.parking_timestamp)
+                        ? formatDateTimeIST(record.parking_timestamp)
                         : "Not parked"
                     }}
                   </div>
@@ -74,7 +98,7 @@
                   <div class="time">
                     {{
                       record.leaving_timestamp
-                        ? formatDateTime(record.leaving_timestamp)
+                        ? formatDateTimeIST(record.leaving_timestamp)
                         : "Not left"
                     }}
                   </div>
@@ -84,7 +108,7 @@
 
             <div class="duration" v-if="record.duration_minutes">
               <i class="bi bi-clock"></i>
-              {{ Math.round(record.duration_minutes) }} minutes
+              {{ formatDuration(record.duration_minutes) }}
             </div>
           </div>
         </div>
@@ -96,7 +120,7 @@
 <script setup>
 import { onMounted, ref, watch } from "vue";
 import { fetchSpotHistory } from "@/services/adminService";
-import { format } from "date-fns";
+import { format, addHours } from "date-fns";
 
 const props = defineProps({
   spotId: Number,
@@ -132,12 +156,41 @@ const close = () => {
   emit("close");
 };
 
-const formatDate = (dateStr) => {
-  return format(new Date(dateStr), "MMM dd, yyyy");
+const toIST = (dateStr) => {
+  if (!dateStr) return null;
+  const date = new Date(dateStr);
+  return addHours(date, 5.5); // Convert UTC to IST (UTC+5:30)
 };
 
-const formatDateTime = (dateStr) => {
-  return format(new Date(dateStr), "MMM dd, hh:mm a");
+const formatDate = (dateStr) => {
+  const date = toIST(dateStr);
+  return format(date, "MMM dd, yyyy");
+};
+
+const formatDateTimeIST = (dateStr) => {
+  if (!dateStr) return "N/A";
+  const date = toIST(dateStr);
+  return format(date, "MMM dd, hh:mm a");
+};
+
+const formatDuration = (minutes) => {
+  if (minutes < 60) {
+    return `${Math.round(minutes)} minutes`;
+  }
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = Math.round(minutes % 60);
+  if (hours < 24) {
+    return `${hours} hour${hours !== 1 ? "s" : ""}${
+      remainingMinutes > 0 ? ` ${remainingMinutes} min` : ""
+    }`;
+  }
+  const days = Math.floor(hours / 24);
+  const remainingHours = hours % 24;
+  return `${days} day${days !== 1 ? "s" : ""}${
+    remainingHours > 0
+      ? ` ${remainingHours} hr${remainingHours !== 1 ? "s" : ""}`
+      : ""
+  }`;
 };
 
 const getStatusClass = (status) => {
@@ -149,6 +202,7 @@ const getStatusClass = (status) => {
     }[status] || "bg-secondary"
   );
 };
+
 onMounted(() => {
   loadHistory();
 });
@@ -237,6 +291,7 @@ onMounted(() => {
   border: 1px solid #eee;
   border-radius: 10px;
   padding: 1.25rem;
+  background: #f9f9f9;
 }
 
 .history-header {
@@ -251,6 +306,7 @@ onMounted(() => {
   border-radius: 6px;
   font-size: 0.75rem;
   font-weight: 500;
+  color: white;
 }
 
 .date {
@@ -262,7 +318,9 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 1rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #eee;
 }
 
 .avatar {
@@ -287,6 +345,33 @@ onMounted(() => {
   color: #6c757d;
 }
 
+.vehicle-details {
+  background: #f0f0f0;
+  padding: 0.75rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.detail-row {
+  display: flex;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.detail-row:last-child {
+  margin-bottom: 0;
+}
+
+.detail-label {
+  font-weight: 500;
+  min-width: 100px;
+  color: #555;
+}
+
+.detail-value {
+  color: #333;
+}
+
 .timeline {
   display: flex;
   flex-direction: column;
@@ -302,6 +387,7 @@ onMounted(() => {
 .timeline-item i {
   color: var(--bs-primary);
   font-size: 1.25rem;
+  margin-top: 2px;
 }
 
 .timeline-item div div:first-child {
@@ -314,6 +400,13 @@ onMounted(() => {
   color: #6c757d;
 }
 
+.time-duration {
+  font-size: 0.8rem;
+  color: #888;
+  margin-top: 0.25rem;
+  font-style: italic;
+}
+
 .duration {
   display: flex;
   align-items: center;
@@ -321,6 +414,8 @@ onMounted(() => {
   font-size: 0.85rem;
   color: var(--bs-success);
   font-weight: 500;
+  padding-top: 0.5rem;
+  border-top: 1px solid #eee;
 }
 
 @keyframes spin {

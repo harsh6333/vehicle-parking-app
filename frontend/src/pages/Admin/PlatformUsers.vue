@@ -23,11 +23,7 @@
           link: '/admin/statistics',
           icon: 'bi bi-clock-history',
         },
-        {
-          title: 'Search',
-          link: '/admin/search',
-          icon: 'bi-search',
-        },
+        { title: 'Search', link: '/admin/search', icon: 'bi-search' },
       ]"
     />
 
@@ -58,21 +54,39 @@
                   <strong>Total Hours Parked:</strong>
                   {{ user.total_parked_hours }}
                 </p>
-                <p class="card-text mb-0">
+                <p class="card-text mb-3">
                   <strong>Total Cost:</strong> ₹{{ user.total_parking_cost }}
                 </p>
-                <span class="badge bg-success mt-2" v-if="user.is_admin"
-                  >Admin</span
-                >
+
+                <div v-if="user.vehicles && user.vehicles.length">
+                  <h6 class="fw-bold mt-2">Vehicles</h6>
+                  <ul class="list-unstyled">
+                    <li
+                      v-for="vehicle in user.vehicles"
+                      :key="vehicle.vehicle_number"
+                      class="mb-2"
+                    >
+                      <div>
+                        <strong>Number:</strong> {{ vehicle.vehicle_number }}
+                      </div>
+                      <div>
+                        <strong>Type:</strong> {{ vehicle.vehicle_type }}
+                      </div>
+                      <div><strong>Brand:</strong> {{ vehicle.brand }}</div>
+                      <div><strong>Color:</strong> {{ vehicle.color }}</div>
+                    </li>
+                  </ul>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- Error Toast -->
+    <ErrorToast v-if="error" :message="error" @dismiss="error = null" />
   </div>
-  <!-- Error Toast -->
-  <ErrorToast v-if="error" :message="error" @dismiss="error = null" />
 </template>
 
 <script setup>
@@ -90,7 +104,8 @@ onMounted(async () => {
   loading.value = true;
   try {
     const res = await fetchUsers();
-    users.value = res.data;
+    // Filter out admins
+    users.value = res.data.filter((u) => !u.is_admin);
   } catch (err) {
     console.error("Failed to fetch users", err);
     error.value =

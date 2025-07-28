@@ -55,24 +55,24 @@ class StatsController:
                 .order_by(Reservation.reserved_at.asc())\
                 .all()
 
-            stats = defaultdict(lambda: {"hours": 0, "revenue": 0})
+            dates = []
+            hours = []
+            revenue = []
 
             for res in reservations:
                 try:
                     if res.reserved_at and res.reserved_till and res.spot and res.spot.lot:
-                        date = res.reserved_at.date().isoformat()
                         duration = (res.reserved_till - res.reserved_at).total_seconds() / 3600
-                        stats[date]["hours"] += duration
-                        stats[date]["revenue"] += duration * res.spot.lot.price
-                except Exception:
-                    continue  # Skip invalid entry
+                        amount = duration * res.spot.lot.price
 
-            sorted_dates = sorted(stats.keys())
-            hours = [round(stats[date]["hours"], 2) for date in sorted_dates]
-            revenue = [round(stats[date]["revenue"], 2) for date in sorted_dates]
+                        dates.append(res.reserved_at.date().isoformat())
+                        hours.append(round(duration, 2))
+                        revenue.append(round(amount, 2))
+                except Exception:
+                    continue  # skip if invalid
 
             return jsonify({
-                "dates": sorted_dates,
+                "dates": dates,
                 "hours": hours,
                 "revenue": revenue
             }), 200

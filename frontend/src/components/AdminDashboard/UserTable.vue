@@ -10,7 +10,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="user in users" :key="user.id" class="border-top-1">
+          <tr v-for="user in nonAdminUsers" :key="user.id" class="border-top-1">
             <td>
               <div class="d-flex align-items-center gap-2">
                 <div class="avatar bg-primary bg-opacity-10 text-primary">
@@ -42,7 +42,11 @@
 </template>
 
 <script setup>
-defineProps({ users: Array });
+import { computed } from "vue";
+const props = defineProps({ users: Array });
+const nonAdminUsers = computed(() =>
+  props.users.filter((user) => !user.is_admin)
+);
 </script>
 
 <style scoped>

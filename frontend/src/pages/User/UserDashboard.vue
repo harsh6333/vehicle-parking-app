@@ -1,5 +1,5 @@
 <template>
-  <div class="dashboard-container">
+  <div class="">
     <NavigationBar
       :navigation="[
         {
@@ -106,12 +106,12 @@ const loadHistory = async () => {
     history.value.find((entry) => !entry.leaving_timestamp) || null;
 };
 
-const reserveSpotfunc = async (spotId, hours = 1) => {
+const reserveSpotfunc = async (spotId, hours = 24) => {
   // Get current time in UTC ISO format
   const nowUTC = new Date().toISOString();
 
   try {
-    const res = await reserveSpot(spotId, nowUTC, hours); // Pass UTC ISO string
+    const res = await reserveSpot(spotId, nowUTC, hours);
     currentReservation.value = res.data;
     await loadLots();
     await loadHistory();

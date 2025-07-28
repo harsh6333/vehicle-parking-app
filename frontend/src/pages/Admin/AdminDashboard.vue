@@ -284,46 +284,5 @@ onMounted(async () => {
 });
 </script>
 <style scoped>
-.admin-dashboard {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  background-color: #f8f9fa;
-}
-
-.main-content {
-  flex: 1;
-  padding-top: 1rem;
-}
-
-.card {
-  border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.03);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  background-color: white;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
-}
-
-.card-header {
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.card-title {
-  font-size: 1.05rem;
-  color: #2c3e50;
-}
-
-.input-group-text {
-  border-right: none;
-}
-
-.form-control-sm {
-  padding: 0.25rem 0.5rem;
-  font-size: 0.825rem;
-}
+@import "@/styles/admindashboard.css";
 </style>

@@ -1,5 +1,5 @@
 <template>
-  <div class="dashboard-container">
+  <div class="">
     <NavigationBar :navigation="navigationItems" />
 
     <div class="container-fluid">
@@ -176,10 +176,6 @@ onMounted(loadHistory);
 </script>
 
 <style scoped>
-.dashboard-container {
-  min-height: 100vh;
-  background-color: #f8f9fa;
-}
 .main-content {
   padding: 1.5rem;
 }

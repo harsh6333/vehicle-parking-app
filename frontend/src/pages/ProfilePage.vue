@@ -1,7 +1,7 @@
 <template>
-  <div class="">
+  <div>
     <NavigationBar :navigation="navigationItems" />
-    <div class="card mx-auto mt-4" style="max-width: 500px">
+    <div class="card mx-auto mt-4" style="max-width: 600px">
       <div class="card-header bg-primary text-white text-center">
         <h4 class="mb-0">My Profile</h4>
       </div>
@@ -26,6 +26,33 @@
               class="form-control"
               required
             />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Address</label>
+            <input v-model="form.address" class="form-control" />
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Pin Code</label>
+            <input v-model="form.pin_code" class="form-control" />
+          </div>
+
+          <div class="mb-3">
+            <label v-if="form.vehicles.length > 0" class="form-label"
+              >Vehicles</label
+            >
+            <div
+              v-for="(vehicle, index) in form.vehicles"
+              :key="index"
+              class="input-group mb-2"
+            >
+              <input
+                v-model="form.vehicles[index]"
+                class="form-control"
+                placeholder="Enter vehicle number"
+              />
+            </div>
           </div>
 
           <div class="mb-3">
@@ -58,19 +85,30 @@ import NavigationBar from "@/components/Common/NavigationBar.vue";
 const form = ref({
   username: "",
   email: "",
-  role: "",
-  created_at: "",
+  address: "",
+  pin_code: "",
+  vehicles: [],
+  is_admin: false,
 });
 const loading = ref(true);
 const error = ref(null);
 const successMsg = ref("");
 const navigationItems = ref([]);
+
 const fetchData = async () => {
   try {
     const res = await fetchProfile();
-    Object.assign(form.value, res.data);
-    res.data?.is_admin
-      ? (navigationItems.value = [
+    Object.assign(form.value, {
+      username: res.data.username,
+      email: res.data.email,
+      address: res.data.address || "",
+      pin_code: res.data.pin_code || "",
+      vehicles: res.data.vehicles?.map((v) => v.vehicle_number) || [],
+      is_admin: res.data.is_admin,
+    });
+
+    navigationItems.value = form.value.is_admin
+      ? [
           {
             title: "Dashboard",
             link: "/admin/dashboard",
@@ -79,25 +117,21 @@ const fetchData = async () => {
           {
             title: "All Users",
             link: "/admin/all_users",
-            icon: "bi bi-clock-history",
+            icon: "bi bi-people",
           },
           {
             title: "All Lots",
             link: "/admin/all_lots",
-            icon: "bi bi-clock-history",
+            icon: "bi bi-building",
           },
           {
             title: "Summary",
             link: "/admin/statistics",
-            icon: "bi bi-clock-history",
+            icon: "bi bi-bar-chart",
           },
-          {
-            title: "Search",
-            link: "/admin/search",
-            icon: "bi-search",
-          },
-        ])
-      : (navigationItems.value = [
+          { title: "Search", link: "/admin/search", icon: "bi-search" },
+        ]
+      : [
           {
             title: "Dashboard",
             link: "/user/dashboard",
@@ -113,7 +147,7 @@ const fetchData = async () => {
             link: "/user/statistics",
             icon: "bi-graph-up",
           },
-        ]);
+        ];
   } catch (err) {
     error.value = err.response?.data?.msg || "Failed to load profile.";
   } finally {
@@ -123,11 +157,19 @@ const fetchData = async () => {
 
 const handleSubmit = async () => {
   try {
-    const res = await updateProfile({
+    const filteredVehicles = form.value.vehicles
+      .map((v) => v.trim())
+      .filter((v) => v !== "")
+      .map((v) => ({ vehicle_number: v }));
+
+    await updateProfile({
       username: form.value.username,
       email: form.value.email,
+      address: form.value.address,
+      pin_code: form.value.pin_code,
+      vehicles: filteredVehicles,
     });
-    Object.assign(form.value, res.data);
+
     successMsg.value = "Profile updated successfully!";
     setTimeout(() => (successMsg.value = ""), 3000);
   } catch (err) {

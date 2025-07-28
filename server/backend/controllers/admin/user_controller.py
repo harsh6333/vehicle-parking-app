@@ -2,18 +2,20 @@ from flask import jsonify
 from backend.models.parking_spot import ParkingSpot
 from backend.models.user import User
 from backend.models.reservation import Reservation
+# from backend.models.vehicles import Vehicle
 from sqlalchemy.orm import joinedload
 from backend import db
 
 
 class UserController:
-    # User List with Stats
+    # User List with Stats + Vehicle Details
     def list_users(self):
         try:
             users = User.query.options(
                 joinedload(User.reservations)
                 .joinedload(Reservation.spot)
-                .joinedload(ParkingSpot.lot)
+                .joinedload(ParkingSpot.lot),
+                joinedload(User.vehicles)
             ).all()
 
             result = []
@@ -33,6 +35,16 @@ class UserController:
                         if r.spot and r.spot.lot and r.spot.lot.price is not None:
                             total_cost += duration_hours * float(r.spot.lot.price)
 
+                vehicles = []
+                for v in u.vehicles:
+                    vehicles.append({
+                        "vehicle_number": v.vehicle_number,
+                        "vehicle_type": v.vehicle_type,
+                        "brand": v.brand,
+                        "color": v.color,
+                        "created_at": v.created_at.isoformat() + "Z" if v.created_at else None
+                    })
+
                 result.append({
                     "username": u.username,
                     "email": u.email,
@@ -40,6 +52,7 @@ class UserController:
                     "total_reservations": len(u.reservations),
                     "total_parked_hours": round(total_hours, 2),
                     "total_parking_cost": round(total_cost, 2),
+                    "vehicles": vehicles
                 })
 
             return jsonify(result), 200
